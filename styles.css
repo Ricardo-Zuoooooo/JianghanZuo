@@ -62,6 +62,67 @@ a {
   font-size: 0.9rem;
 }
 
+.timezone-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.timezone-btn {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  padding: 0.15rem 0.35rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.timezone-btn::after {
+  content: "▾";
+  font-size: 0.7em;
+  color: var(--muted);
+}
+
+.timezone-menu {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 110%;
+  margin: 0;
+  padding: 0.35rem 0;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  min-width: 160px;
+  z-index: 30;
+}
+
+.timezone-menu li {
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  color: var(--text);
+  outline: none;
+  border-radius: 6px;
+}
+
+.timezone-menu li:hover,
+.timezone-menu li:focus,
+.timezone-menu li:focus-visible {
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 2px rgba(60, 113, 245, 0.25);
+}
+
+.timezone-menu li.active {
+  font-weight: 600;
+  color: var(--primary);
+}
+
 .header-right {
   display: flex;
   gap: 0.75rem;
@@ -83,6 +144,7 @@ a {
 .icon-btn:focus-visible,
 .circle-btn:focus-visible,
 .btn:focus-visible,
+.timezone-btn:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {

@@ -10,7 +10,22 @@
   <header class="app-header">
     <div class="header-left">
       <h1>Daily Manager</h1>
-      <p class="subtitle">个人日常管理面板 · Europe/London</p>
+      <div class="subtitle timezone-picker" id="timezonePicker">
+        <button
+          id="timezoneButton"
+          type="button"
+          class="timezone-btn"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          aria-controls="timezoneMenu"
+        >
+          Europe/London
+        </button>
+        <ul id="timezoneMenu" class="timezone-menu" role="listbox" hidden>
+          <li role="option" data-value="Europe/London" tabindex="0">Europe/London</li>
+          <li role="option" data-value="Asia/Shanghai" tabindex="0">China</li>
+        </ul>
+      </div>
     </div>
     <div class="header-right">
       <button id="themeToggle" class="icon-btn" aria-label="切换主题" title="切换主题 (T)">

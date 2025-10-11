@@ -4,9 +4,15 @@ const STORAGE_KEYS = {
   settings: "dm_settings",
 };
 
+const TIMEZONE_OPTIONS = [
+  { value: "Europe/London", label: "Europe/London" },
+  { value: "Asia/Shanghai", label: "China" },
+];
+
 const DEFAULT_SETTINGS = {
   theme: "light",
   selectedDate: null,
+  timeZone: TIMEZONE_OPTIONS[0].value,
 };
 
 const state = {
@@ -19,38 +25,60 @@ const state = {
   editingJournalId: null,
 };
 
+function getTimeZone() {
+  return state.settings.timeZone || DEFAULT_SETTINGS.timeZone;
+}
+
+function getTimeZoneLabel(value) {
+  return TIMEZONE_OPTIONS.find((item) => item.value === value)?.label || value;
+}
+
+function safeCssEscape(value) {
+  if (window.CSS?.escape) {
+    return window.CSS.escape(value);
+  }
+  return value.replace(/[^a-zA-Z0-9_-]/g, (char) => `\\${char}`);
+}
+
 const formatter = {
   date(date) {
-    return new Date(date).toLocaleString("sv-SE", {
-      timeZone: "Europe/London",
+    const tz = getTimeZone();
+    const base = new Date(`${date}T12:00:00Z`);
+    return new Intl.DateTimeFormat("sv-SE", {
+      timeZone: tz,
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-    }).slice(0, 10);
+    })
+      .format(base)
+      .slice(0, 10);
   },
   time(date) {
-    return new Date(date).toLocaleString("en-GB", {
-      timeZone: "Europe/London",
+    const tz = getTimeZone();
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: tz,
       hour12: false,
       hour: "2-digit",
       minute: "2-digit",
-    });
+    }).format(date instanceof Date ? date : new Date(`${date}T12:00:00Z`));
   },
   label(date) {
-    const d = new Date(date + "T00:00:00Z");
+    const tz = getTimeZone();
+    const base = new Date(`${date}T12:00:00Z`);
     return new Intl.DateTimeFormat("zh-Hans", {
-      timeZone: "Europe/London",
+      timeZone: tz,
       year: "numeric",
       month: "long",
       day: "2-digit",
       weekday: "long",
-    }).format(d);
+    }).format(base);
   },
 };
 
-function nowLondon() {
+function nowInTimeZone() {
+  const tz = getTimeZone();
   const iso = new Date().toLocaleString("sv-SE", {
-    timeZone: "Europe/London",
+    timeZone: tz,
   });
   const [date, time] = iso.split(" ");
   return { date, time: time.slice(0, 5) };
@@ -67,7 +95,11 @@ function loadState() {
   } catch (error) {
     console.error("Failed to load local state", error);
   }
-  state.selectedDate = state.settings.selectedDate || nowLondon().date;
+  if (!TIMEZONE_OPTIONS.some((opt) => opt.value === state.settings.timeZone)) {
+    state.settings.timeZone = DEFAULT_SETTINGS.timeZone;
+  }
+  const current = nowInTimeZone();
+  state.selectedDate = state.settings.selectedDate || current.date;
   state.calendarAnchor = state.selectedDate;
 }
 
@@ -84,6 +116,7 @@ function saveSettings() {
   persist(STORAGE_KEYS.settings, {
     theme: document.body.dataset.theme || "light",
     selectedDate: state.selectedDate,
+    timeZone: getTimeZone(),
   });
 }
 
@@ -102,6 +135,119 @@ function toggleTheme() {
   document.body.dataset.theme = next;
   state.settings.theme = next;
   saveSettings();
+}
+
+function updateTimezoneDisplay() {
+  const button = document.getElementById("timezoneButton");
+  if (button) {
+    const label = getTimeZoneLabel(getTimeZone());
+    button.textContent = label;
+    button.setAttribute("aria-label", `当前时区：${label}，点击切换`);
+    button.setAttribute("title", `${label}`);
+  }
+  const menu = document.getElementById("timezoneMenu");
+  if (menu) {
+    menu.querySelectorAll("[data-value]").forEach((item) => {
+      const isActive = item.dataset.value === getTimeZone();
+      item.setAttribute("aria-selected", String(isActive));
+      item.classList.toggle("active", isActive);
+    });
+  }
+}
+
+function setTimeZone(value) {
+  if (!TIMEZONE_OPTIONS.some((item) => item.value === value)) return;
+  if (value === getTimeZone()) return;
+  state.settings.timeZone = value;
+  updateTimezoneDisplay();
+  document.getElementById("selectedDateLabel").textContent = formatter.label(state.selectedDate);
+  if (document.getElementById("journalForm").hidden) {
+    const now = nowInTimeZone();
+    document.getElementById("journalDate").value = state.selectedDate || now.date;
+    document.getElementById("journalTime").value = now.time;
+  }
+  renderCalendar();
+  saveSettings();
+}
+
+function setupTimezonePicker() {
+  const picker = document.getElementById("timezonePicker");
+  const button = document.getElementById("timezoneButton");
+  const menu = document.getElementById("timezoneMenu");
+  if (!picker || !button || !menu) return;
+
+  updateTimezoneDisplay();
+
+  function closeMenu() {
+    menu.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+  }
+
+  function openMenu() {
+    menu.hidden = false;
+    button.setAttribute("aria-expanded", "true");
+    updateTimezoneDisplay();
+    const active = menu.querySelector(`[data-value="${safeCssEscape(getTimeZone())}"]`);
+    active?.focus();
+  }
+
+  button.addEventListener("click", () => {
+    if (menu.hidden) {
+      openMenu();
+    } else {
+      closeMenu();
+    }
+  });
+
+  button.addEventListener("keydown", (event) => {
+    if ((event.key === "Enter" || event.key === " ") && menu.hidden) {
+      event.preventDefault();
+      openMenu();
+    }
+    if (event.key === "Escape" && !menu.hidden) {
+      closeMenu();
+    }
+    if (event.key === "ArrowDown" && menu.hidden) {
+      event.preventDefault();
+      openMenu();
+    }
+  });
+
+  menu.querySelectorAll("[data-value]").forEach((item) => {
+    item.addEventListener("click", () => {
+      setTimeZone(item.dataset.value);
+      closeMenu();
+      button.focus();
+    });
+    item.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        setTimeZone(item.dataset.value);
+        closeMenu();
+        button.focus();
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMenu();
+        button.focus();
+      }
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!menu.hidden && !picker.contains(event.target)) {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Tab" && !menu.hidden) {
+      const focusable = Array.from(menu.querySelectorAll("[data-value]"));
+      if (!focusable.includes(document.activeElement)) {
+        closeMenu();
+      }
+    }
+  });
 }
 
 function setSelectedDate(date) {
@@ -156,7 +302,7 @@ function closeTodoForm() {
 function openJournalForm(entry = null) {
   const form = document.getElementById("journalForm");
   form.hidden = false;
-  const now = nowLondon();
+  const now = nowInTimeZone();
   const date = state.selectedDate || now.date;
   if (entry) {
     state.editingJournalId = entry.id;
@@ -176,7 +322,7 @@ function openJournalForm(entry = null) {
 function closeJournalForm() {
   const form = document.getElementById("journalForm");
   form.reset();
-  const now = nowLondon();
+  const now = nowInTimeZone();
   document.getElementById("journalDate").value = state.selectedDate || now.date;
   document.getElementById("journalTime").value = now.time;
   form.hidden = true;
@@ -618,6 +764,8 @@ function setupEventHandlers() {
 
   document.addEventListener("keydown", (event) => {
     if (event.target.matches("input, textarea")) return;
+    const tzMenu = document.getElementById("timezoneMenu");
+    if (tzMenu && !tzMenu.hidden) return;
     if (event.key.toLowerCase() === "n") {
       event.preventDefault();
       openTodoForm();
@@ -864,8 +1012,9 @@ function handleDragEnd(event) {
 function initialize() {
   loadState();
   setupTheme();
+  setupTimezonePicker();
   setupEventHandlers();
-  const now = nowLondon();
+  const now = nowInTimeZone();
   document.getElementById("journalDate").value = state.selectedDate || now.date;
   document.getElementById("journalTime").value = now.time;
   document.getElementById("selectedDateLabel").textContent = formatter.label(state.selectedDate);
