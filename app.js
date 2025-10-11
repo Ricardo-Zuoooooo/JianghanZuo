@@ -281,12 +281,10 @@ function openTodoForm(todo = null) {
   if (todo) {
     state.editingTodoId = todo.id;
     document.getElementById("todoTitle").value = todo.title;
-    document.getElementById("todoPriority").value = String(todo.priority || 3);
     document.getElementById("todoNote").value = todo.note || "";
   } else {
     state.editingTodoId = null;
     form.reset();
-    document.getElementById("todoPriority").value = "3";
   }
   document.getElementById("todoTitle").focus();
 }
@@ -294,7 +292,6 @@ function openTodoForm(todo = null) {
 function closeTodoForm() {
   const form = document.getElementById("todoForm");
   form.reset();
-  document.getElementById("todoPriority").value = "3";
   form.hidden = true;
   state.editingTodoId = null;
 }
@@ -402,12 +399,10 @@ function getGlobalSearchTerm() {
 function filteredTodos() {
   const search = getGlobalSearchTerm();
   const statusEl = document.getElementById("filterStatus");
-  const priorityEl = document.getElementById("filterPriority");
   const dateFromEl = document.getElementById("filterDateFrom");
   const dateToEl = document.getElementById("filterDateTo");
   const tagsEl = document.getElementById("filterTags");
   const status = statusEl ? statusEl.value : "all";
-  const priority = priorityEl ? priorityEl.value : "all";
   const dateFrom = dateFromEl ? dateFromEl.value : "";
   const dateTo = dateToEl ? dateToEl.value : "";
   const tags = parseTags((tagsEl?.value || "").toLowerCase());
@@ -417,7 +412,6 @@ function filteredTodos() {
     if (dateTo && todo.date > dateTo) return false;
     if (status === "pending" && todo.done) return false;
     if (status === "done" && !todo.done) return false;
-    if (priority !== "all" && String(todo.priority) !== priority) return false;
 
     const haystack = `${todo.title} ${todo.note}`.toLowerCase();
     const tagMatch = tags.length
@@ -467,12 +461,12 @@ function renderTodos() {
     checkbox.checked = !!todo.done;
     checkbox.setAttribute("aria-label", todo.done ? "Mark as incomplete" : "Mark as complete");
     const titleEl = node.querySelector(".todo-title");
-    titleEl.textContent = `${todo.order}. ${todo.title}`;
+    titleEl.textContent = todo.title;
     titleEl.classList.toggle("done", todo.done);
     const metaEl = node.querySelector(".todo-meta");
     metaEl.innerHTML = "";
     const statusSpan = document.createElement("span");
-    statusSpan.textContent = `Priority ${todo.priority} · ${todo.done ? "Completed" : "Incomplete"}`;
+    statusSpan.textContent = todo.done ? "Completed" : "Incomplete";
     metaEl.appendChild(statusSpan);
     if (todo.note) {
       const noteSpan = document.createElement("span");
@@ -703,7 +697,7 @@ function changeCalendarPeriod(offset) {
 
 function setupEventHandlers() {
   document.getElementById("themeToggle").addEventListener("click", toggleTheme);
-  ["filterDateFrom", "filterDateTo", "filterStatus", "filterPriority", "filterTags"].forEach((id) => {
+  ["filterDateFrom", "filterDateTo", "filterStatus", "filterTags"].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener("input", () => {
@@ -803,7 +797,6 @@ function handleTodoSubmit(event) {
     return;
   }
   const note = document.getElementById("todoNote").value.trim();
-  const priority = Number(document.getElementById("todoPriority").value);
   const id = state.editingTodoId || crypto.randomUUID();
   const todo = state.todos.find((t) => t.id === id) || {
     id,
@@ -813,7 +806,6 @@ function handleTodoSubmit(event) {
   };
   todo.title = title;
   todo.note = note;
-  todo.priority = priority;
   todo.date = state.selectedDate;
   upsertTodo(todo);
   state.editingTodoId = null;
@@ -912,7 +904,7 @@ function exportTodosTxtRange() {
   const lines = todos.map((todo) => {
     const status = todo.done ? "✔" : "○";
     const note = todo.note ? ` — ${todo.note}` : "";
-    return `${todo.date} #${todo.order} [P${todo.priority}] ${status} ${todo.title}${note}`;
+    return `${todo.date} ${status} ${todo.title}${note}`;
   });
   const content = [`Todo export (${from} ~ ${to})`, "", ...lines].join("\n");
   downloadFile(`todos_${from}_${to}.txt`, content, { mime: "text/plain;charset=utf-8", bom: true });

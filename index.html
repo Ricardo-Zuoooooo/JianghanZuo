@@ -59,13 +59,6 @@
         <form id="todoForm" class="card inline-form" aria-label="Create or edit todo" hidden>
           <div class="form-row">
             <input id="todoTitle" name="title" type="text" placeholder="Todo title" required />
-            <select id="todoPriority" name="priority" required>
-              <option value="3">Priority 3</option>
-              <option value="5">Priority 5</option>
-              <option value="4">Priority 4</option>
-              <option value="2">Priority 2</option>
-              <option value="1">Priority 1</option>
-            </select>
           </div>
           <textarea id="todoNote" name="note" rows="2" placeholder="Notes (Enter to save, Esc to cancel)"></textarea>
           <div class="form-actions">
@@ -78,7 +71,7 @@
 
       <section class="journal-section" aria-labelledby="journalHeading">
         <div class="section-header simple">
-          <h3 id="journalHeading">Journal / Activities</h3>
+          <h3 id="journalHeading">Activities</h3>
           <button id="newJournalBtn" class="circle-btn" type="button" title="New journal entry (J)" aria-label="New journal entry">＋</button>
         </div>
         <form id="journalForm" class="card quick-entry inline-form" aria-label="Create or edit journal entry" hidden>
