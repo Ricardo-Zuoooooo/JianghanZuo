@@ -35,10 +35,6 @@
   </header>
 
   <div class="top-controls">
-    <div class="search-group">
-      <label for="globalSearch">🔍</label>
-      <input id="globalSearch" type="search" placeholder="全局搜索 ( / 聚焦 )" aria-label="全局搜索" />
-    </div>
     <div class="filter-group">
       <div>
         <label for="filterDateFrom">开始日期</label>
@@ -139,7 +135,7 @@
   </main>
 
   <section class="export-panel" aria-label="数据导出">
-    <h3>导出与备份</h3>
+    <h3>导出</h3>
     <div class="export-grid">
       <div class="export-card">
         <h4>日记导出</h4>
@@ -157,15 +153,6 @@
         <h4>代办导出</h4>
         <p class="export-hint">使用上方筛选条件确定范围</p>
         <button id="exportTodosTxtRange" class="btn" type="button">导出代办 TXT</button>
-      </div>
-      <div class="export-card">
-        <h4>备份</h4>
-        <div class="backup-controls" role="group" aria-label="备份与还原">
-          <button id="exportBackup" class="btn" type="button">导出备份</button>
-          <label for="importBackup" class="btn" tabindex="0">导入备份
-            <input id="importBackup" type="file" accept="application/json" />
-          </label>
-        </div>
       </div>
     </div>
   </section>

@@ -189,46 +189,12 @@ select:focus-visible {
   transform: none;
 }
 
-.backup-controls label {
-  position: relative;
-  overflow: hidden;
-}
-
-.backup-controls input {
-  position: absolute;
-  opacity: 0;
-  inset: 0;
-  cursor: pointer;
-}
-
 .top-controls {
   padding: 1rem 1.5rem;
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
-}
-
-.search-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-}
-
-.search-group input {
-  border: none;
-  background: transparent;
-  min-width: 16rem;
-  font-size: 1rem;
-  color: inherit;
-}
-
-.search-group input::placeholder {
-  color: var(--muted);
 }
 
 .filter-group {
@@ -674,12 +640,6 @@ textarea {
   font-size: 0.85rem;
 }
 
-.backup-controls {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
 #toast {
   position: fixed;
   bottom: 1.5rem;
@@ -730,13 +690,9 @@ textarea {
     width: 100%;
   }
 
-  .search-group input {
-    min-width: 12rem;
-  }
-
   .journal-item {
     grid-template-columns: 70px 1fr;
   }
 }
 
-/* 自检：刷新后数据仍在；导出/导入可恢复；日历同步与排序即时保存；导出正确；移动端、主题、键盘、空值/长文本处理 */
+/* 自检：刷新后数据仍在；TXT 导出可恢复内容；日历同步与排序即时保存；筛选准确；移动端、主题、键盘、空值/长文本处理妥当 */

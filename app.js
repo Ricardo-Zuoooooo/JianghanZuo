@@ -394,8 +394,13 @@ function deleteJournal(id) {
   renderCalendar();
 }
 
+function getGlobalSearchTerm() {
+  const input = document.getElementById("globalSearch");
+  return input ? input.value.trim().toLowerCase() : "";
+}
+
 function filteredTodos() {
-  const search = document.getElementById("globalSearch").value.trim().toLowerCase();
+  const search = getGlobalSearchTerm();
   const status = document.getElementById("filterStatus").value;
   const priority = document.getElementById("filterPriority").value;
   const dateFrom = document.getElementById("filterDateFrom").value;
@@ -420,7 +425,7 @@ function filteredTodos() {
 }
 
 function filteredJournal() {
-  const search = document.getElementById("globalSearch").value.trim().toLowerCase();
+  const search = getGlobalSearchTerm();
   const dateFrom = document.getElementById("filterDateFrom").value;
   const dateTo = document.getElementById("filterDateTo").value;
   const tags = parseTags(document.getElementById("filterTags").value.toLowerCase());
@@ -689,11 +694,6 @@ function changeCalendarPeriod(offset) {
 
 function setupEventHandlers() {
   document.getElementById("themeToggle").addEventListener("click", toggleTheme);
-  document.getElementById("globalSearch").addEventListener("input", () => {
-    renderTodos();
-    renderJournal();
-  });
-
   ["filterDateFrom", "filterDateTo", "filterStatus", "filterPriority", "filterTags"].forEach((id) => {
     document.getElementById(id).addEventListener("input", () => {
       renderTodos();
@@ -748,13 +748,6 @@ function setupEventHandlers() {
     }
   });
 
-  document.getElementById("globalSearch").addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      event.target.value = "";
-      event.target.dispatchEvent(new Event("input"));
-    }
-  });
-
   document.getElementById("newTodoBtn").addEventListener("click", () => {
     openTodoForm();
   });
@@ -774,10 +767,6 @@ function setupEventHandlers() {
       event.preventDefault();
       openJournalForm();
     }
-    if (event.key === "/") {
-      event.preventDefault();
-      document.getElementById("globalSearch").focus();
-    }
     if (event.key.toLowerCase() === "t") {
       event.preventDefault();
       toggleTheme();
@@ -786,9 +775,6 @@ function setupEventHandlers() {
 
   document.getElementById("exportJournalTxt").addEventListener("click", exportJournalTxt);
   document.getElementById("exportTodosTxtRange").addEventListener("click", exportTodosTxtRange);
-
-  document.getElementById("exportBackup").addEventListener("click", exportBackup);
-  document.getElementById("importBackup").addEventListener("change", importBackup);
 }
 
 function handleTodoSubmit(event) {
@@ -902,45 +888,6 @@ function exportTodosTxtRange() {
   showToast("代办已导出");
 }
 
-function exportBackup() {
-  const payload = {
-    version: 1,
-    journal: state.journal,
-    todos: state.todos,
-  };
-  downloadFile(
-    `backup_${new Date().toISOString().slice(0, 10)}.json`,
-    JSON.stringify(payload, null, 2),
-    { mime: "application/json", bom: false }
-  );
-  showToast("备份已导出");
-}
-
-async function importBackup(event) {
-  const file = event.target.files?.[0];
-  if (!file) return;
-  try {
-    const text = await file.text();
-    const data = JSON.parse(text);
-    if (!data || typeof data !== "object" || data.version !== 1) throw new Error("版本不符");
-    if (!Array.isArray(data.journal) || !Array.isArray(data.todos)) throw new Error("格式错误");
-    state.journal = data.journal;
-    state.todos = data.todos;
-    saveAll();
-    closeTodoForm();
-    closeJournalForm();
-    renderJournal();
-    renderTodos();
-    renderCalendar();
-    showToast("备份已导入");
-  } catch (error) {
-    console.error(error);
-    showToast("导入失败，请检查文件");
-  } finally {
-    event.target.value = "";
-  }
-}
-
 function downloadFile(filename, content, options = {}) {
   const { mime = "text/plain;charset=utf-8", bom = false } = options;
   const data = bom && mime.startsWith("text/") ? `\ufeff${content}` : content;
@@ -1027,4 +974,4 @@ function initialize() {
 
 window.addEventListener("DOMContentLoaded", initialize);
 
-// 自检：刷新后数据仍在；TXT 导出/JSON 备份保持顺序；日历选择同步；筛选搜索即时；键盘快捷键和焦点可用；拖拽/按钮排序立即保存。
+// 自检：刷新后数据仍在；TXT 导出保持顺序；日历选择同步；筛选即时；键盘快捷键和焦点可用；拖拽/按钮排序立即保存。
