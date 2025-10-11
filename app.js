@@ -869,8 +869,6 @@ function initialize() {
   document.getElementById("journalDate").value = state.selectedDate || now.date;
   document.getElementById("journalTime").value = now.time;
   document.getElementById("selectedDateLabel").textContent = formatter.label(state.selectedDate);
-  document.getElementById("filterDateFrom").value = state.selectedDate;
-  document.getElementById("filterDateTo").value = state.selectedDate;
   document.getElementById("journalExportFrom").value = state.selectedDate;
   document.getElementById("journalExportTo").value = state.selectedDate;
   renderCalendar();
