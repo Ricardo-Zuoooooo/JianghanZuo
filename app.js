@@ -465,15 +465,14 @@ function renderTodos() {
     titleEl.classList.toggle("done", todo.done);
     const metaEl = node.querySelector(".todo-meta");
     metaEl.innerHTML = "";
-    const statusSpan = document.createElement("span");
-    statusSpan.textContent = todo.done ? "Completed" : "Incomplete";
-    metaEl.appendChild(statusSpan);
     if (todo.note) {
       const noteSpan = document.createElement("span");
       noteSpan.textContent = todo.note;
       noteSpan.className = "note-text";
       noteSpan.title = todo.note;
       metaEl.appendChild(noteSpan);
+    } else {
+      metaEl.remove();
     }
     fragment.appendChild(node);
   });
@@ -520,11 +519,14 @@ function renderJournal() {
       const metaEl = node.querySelector(".journal-meta");
       metaEl.innerHTML = "";
       const timeSpan = document.createElement("span");
-      timeSpan.textContent = `${entry.date} ${entry.time}`;
+      timeSpan.textContent = formatTime(entry.time);
       metaEl.appendChild(timeSpan);
-      const tagsSpan = document.createElement("span");
-      tagsSpan.textContent = entry.tags?.length ? entry.tags.map((tag) => `#${tag}`).join(" ") : "No tags";
-      metaEl.appendChild(tagsSpan);
+      if (entry.tags?.length) {
+        const tagsSpan = document.createElement("span");
+        tagsSpan.textContent = entry.tags.map((tag) => `#${tag}`).join(" ");
+        tagsSpan.className = "note-text";
+        metaEl.appendChild(tagsSpan);
+      }
       fragment.appendChild(node);
     });
 
