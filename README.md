@@ -3,6 +3,24 @@
 
 # Getting Started
 
+## Daily Manager 单页应用本地使用指南
+
+仓库根目录下的 `index.html`、`styles.css` 与 `app.js` 组成了日常管理的前端应用，不需要额外的后端或构建流程。要在本地体验：
+
+1. 克隆或下载此仓库后，确保三个文件位于同一目录（保持仓库原有结构即可）。
+2. 直接用浏览器打开 `index.html`：
+   - 在文件管理器中双击 `index.html`；或
+   - 右键选择“用浏览器打开”；或
+   - 在命令行启动临时静态服务器（可选）：
+     ```bash
+     python -m http.server 8000
+     ```
+     然后访问 http://localhost:8000/index.html。
+3. 首次打开时应用会根据默认时区（Europe/London）运行，并自动把数据保存在浏览器的 `localStorage` 中（键名：`dm_journal`、`dm_todos`、`dm_settings`）。刷新页面后数据仍会保留。
+4. 如果需要备份或迁移数据，可在界面中使用“导出备份”与“导入备份”按钮导出/导入 JSON 文件。
+
+> 若你只想运行 Jekyll 站点，请继续阅读下方原有的“Running locally”章节。
+
 1. Register a GitHub account if you don't have one and confirm your e-mail (required!)
 1. Click the "Use this template" button in the top right.
 1. On the "New repository" page, enter your repository name as "[your GitHub username].github.io", which will also be your website's URL.

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <h1>Daily Manager</h1>
+      <p class="subtitle">个人日常管理面板 · Europe/London</p>
+    </div>
+    <div class="header-right">
+      <button id="themeToggle" class="icon-btn" aria-label="切换主题" title="切换主题 (T)">
+        <span class="icon">🌗</span>
+      </button>
+      <div class="backup-controls" role="group" aria-label="备份与还原">
+        <button id="exportBackup" class="btn" type="button">导出备份</button>
+        <label for="importBackup" class="btn" tabindex="0">导入备份
+          <input id="importBackup" type="file" accept="application/json" />
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <div class="top-controls">
+    <div class="search-group">
+      <label for="globalSearch">🔍</label>
+      <input id="globalSearch" type="search" placeholder="全局搜索 ( / 聚焦 )" aria-label="全局搜索" />
+    </div>
+    <div class="filter-group">
+      <div>
+        <label for="filterDateFrom">开始日期</label>
+        <input id="filterDateFrom" type="date" />
+      </div>
+      <div>
+        <label for="filterDateTo">结束日期</label>
+        <input id="filterDateTo" type="date" />
+      </div>
+      <div>
+        <label for="filterStatus">完成状态</label>
+        <select id="filterStatus">
+          <option value="all">全部</option>
+          <option value="pending">未完成</option>
+          <option value="done">已完成</option>
+        </select>
+      </div>
+      <div>
+        <label for="filterPriority">优先级</label>
+        <select id="filterPriority">
+          <option value="all">全部</option>
+          <option value="5">5</option>
+          <option value="4">4</option>
+          <option value="3">3</option>
+          <option value="2">2</option>
+          <option value="1">1</option>
+        </select>
+      </div>
+      <div>
+        <label for="filterTags">标签 (逗号分隔)</label>
+        <input id="filterTags" type="text" placeholder="tag1,tag2" />
+      </div>
+    </div>
+  </div>
+
+  <main class="layout">
+    <section class="calendar-panel" aria-label="日历">
+      <div class="calendar-controls">
+        <div class="view-switch" role="tablist">
+          <button data-view="month" class="active" role="tab" aria-selected="true">月</button>
+          <button data-view="week" role="tab" aria-selected="false">周</button>
+          <button data-view="day" role="tab" aria-selected="false">日</button>
+        </div>
+        <div class="calendar-nav">
+          <button id="prevPeriod" class="btn" type="button" aria-label="上一段">◀</button>
+          <div id="calendarLabel" aria-live="polite"></div>
+          <button id="nextPeriod" class="btn" type="button" aria-label="下一段">▶</button>
+        </div>
+      </div>
+      <div id="calendarGrid" class="calendar-grid" role="grid"></div>
+    </section>
+
+    <section class="day-panel" aria-label="当日详情">
+      <div class="day-header">
+        <h2 id="selectedDateLabel"></h2>
+        <div class="day-actions">
+          <button id="newTodoBtn" class="btn" type="button" title="新建代办 (N)">+ 代办</button>
+          <button id="newJournalBtn" class="btn" type="button" title="新建日记 (J)">+ 日记</button>
+        </div>
+      </div>
+
+      <section class="todo-section" aria-labelledby="todoHeading">
+        <div class="section-header">
+          <h3 id="todoHeading">当日代办</h3>
+          <div class="todo-export">
+            <button id="exportTodosCsv" class="btn" type="button">导出当日 CSV</button>
+          </div>
+        </div>
+        <form id="todoForm" class="card" aria-label="新增代办">
+          <div class="form-row">
+            <input id="todoTitle" name="title" type="text" placeholder="代办标题" required />
+            <select id="todoPriority" name="priority" required>
+              <option value="3">优先级 3</option>
+              <option value="5">优先级 5</option>
+              <option value="4">优先级 4</option>
+              <option value="2">优先级 2</option>
+              <option value="1">优先级 1</option>
+            </select>
+          </div>
+          <textarea id="todoNote" name="note" rows="2" placeholder="备注 (Enter 保存, Esc 取消)"></textarea>
+          <div class="form-actions">
+            <button type="submit" class="btn primary">保存代办</button>
+            <button type="button" id="cancelTodo" class="btn ghost">取消</button>
+          </div>
+        </form>
+        <ul id="todoList" class="todo-list" aria-live="polite"></ul>
+      </section>
+
+      <section class="journal-section" aria-labelledby="journalHeading">
+        <div class="section-header">
+          <h3 id="journalHeading">日记 / 活动</h3>
+          <div class="journal-export">
+            <label>导出范围</label>
+            <input id="journalExportFrom" type="date" />
+            <input id="journalExportTo" type="date" />
+            <button id="exportJournalCsv" class="btn" type="button">导出 CSV</button>
+            <button id="exportJournalJson" class="btn" type="button">导出 JSON</button>
+          </div>
+        </div>
+        <form id="journalForm" class="card quick-entry" aria-label="新增日记">
+          <div class="form-row">
+            <input id="journalDate" type="date" required />
+            <input id="journalTime" type="time" required />
+            <input id="journalTags" type="text" placeholder="标签 (空格或逗号分隔)" />
+          </div>
+          <textarea id="journalContent" rows="2" placeholder="记录今天 (Enter 保存, Shift+Enter 换行)" required></textarea>
+          <div class="form-actions">
+            <button type="submit" class="btn primary">保存日记</button>
+            <button type="button" id="cancelJournal" class="btn ghost">取消</button>
+          </div>
+        </form>
+        <ol id="journalTimeline" class="journal-timeline" aria-live="polite"></ol>
+      </section>
+    </section>
+  </main>
+
+  <section class="export-panel" aria-label="数据导出">
+    <h3>数据导出与同步</h3>
+    <div class="export-actions">
+      <button id="exportTodosCsvRange" class="btn" type="button">导出代办 CSV (按过滤)</button>
+      <button id="exportTodosJsonRange" class="btn" type="button">导出代办 JSON (按过滤)</button>
+    </div>
+  </section>
+
+  <template id="todoItemTemplate">
+    <li class="todo-item" draggable="true">
+      <div class="todo-main">
+        <label class="checkbox">
+          <input type="checkbox" class="todo-done" />
+          <span class="checkmark" aria-hidden="true"></span>
+        </label>
+        <div class="todo-content">
+          <div class="todo-title"></div>
+          <div class="todo-meta"></div>
+          <button class="toggle-note" type="button">展开备注</button>
+          <div class="todo-note" hidden></div>
+        </div>
+      </div>
+      <div class="todo-actions" role="group" aria-label="代办操作">
+        <button class="btn ghost up" type="button" title="上移">↑</button>
+        <button class="btn ghost down" type="button" title="下移">↓</button>
+        <button class="btn ghost edit" type="button" title="编辑">编辑</button>
+        <button class="btn ghost delete" type="button" title="删除">删除</button>
+      </div>
+    </li>
+  </template>
+
+  <template id="journalItemTemplate">
+    <li class="journal-item">
+      <div class="journal-time"></div>
+      <div class="journal-body">
+        <div class="journal-content"></div>
+        <div class="journal-tags"></div>
+        <div class="journal-actions" role="group" aria-label="日记操作">
+          <button class="btn ghost edit" type="button">编辑</button>
+          <button class="btn ghost delete" type="button">删除</button>
+        </div>
+      </div>
+    </li>
+  </template>
+
+  <div id="toast" role="status" aria-live="assertive"></div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

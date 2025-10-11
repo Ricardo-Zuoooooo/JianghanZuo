@@ -1,0 +1,553 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f7f7fb;
+  --surface: #ffffff;
+  --surface-2: #f0f3fa;
+  --text: #1f2430;
+  --muted: #5f6b7b;
+  --primary: #3c71f5;
+  --primary-contrast: #ffffff;
+  --accent: #ffa726;
+  --border: rgba(41, 51, 73, 0.1);
+  --shadow: 0 12px 30px rgba(41, 51, 73, 0.1);
+  --focus: 0 0 0 3px rgba(60, 113, 245, 0.4);
+  --font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body[data-theme="dark"] {
+  --bg: #111726;
+  --surface: #1a2132;
+  --surface-2: #242d41;
+  --text: #e7ebf6;
+  --muted: #9aa4ba;
+  --primary: #7c9bff;
+  --border: rgba(255, 255, 255, 0.08);
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: inherit;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  gap: 1rem;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.header-right {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.icon-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.icon-btn:focus-visible,
+.btn:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.icon-btn:hover {
+  transform: scale(1.05);
+}
+
+.btn {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: inherit;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: var(--primary-contrast);
+  border-color: transparent;
+}
+
+.btn.ghost {
+  background: transparent;
+}
+
+.btn:hover {
+  background: var(--primary);
+  color: var(--primary-contrast);
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.backup-controls label {
+  position: relative;
+  overflow: hidden;
+}
+
+.backup-controls input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+
+.top-controls {
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.search-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.search-group input {
+  border: none;
+  background: transparent;
+  min-width: 16rem;
+  font-size: 1rem;
+  color: inherit;
+}
+
+.search-group input::placeholder {
+  color: var(--muted);
+}
+
+.filter-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.filter-group label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.filter-group input,
+.filter-group select {
+  width: 9rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: inherit;
+}
+
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(270px, 1fr) minmax(380px, 2fr);
+  gap: 1.5rem;
+  padding: 0 1.5rem 1.5rem;
+}
+
+.calendar-panel,
+.day-panel,
+.export-panel {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.calendar-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.view-switch button {
+  border: none;
+  background: var(--surface-2);
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.view-switch button.active {
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  min-height: 18rem;
+}
+
+.calendar-cell {
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.15s ease, border-color 0.2s ease;
+}
+
+.calendar-cell:hover,
+.calendar-cell:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+}
+
+.calendar-cell.selected {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.calendar-cell .date-number {
+  font-weight: 700;
+}
+
+.calendar-cell .counts {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.day-panel {
+  gap: 1.25rem;
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.card {
+  background: var(--surface-2);
+  border-radius: 16px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.form-row input,
+.form-row select {
+  flex: 1;
+  min-width: 9rem;
+  padding: 0.6rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: inherit;
+}
+
+textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  background: var(--surface);
+  color: inherit;
+  resize: vertical;
+}
+
+.todo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 22rem;
+  overflow: auto;
+}
+
+.todo-item {
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--border);
+}
+
+.todo-item.dragging {
+  opacity: 0.6;
+}
+
+.todo-main {
+  display: flex;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.checkbox {
+  position: relative;
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.checkbox input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.checkmark {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border-radius: 6px;
+  border: 2px solid var(--muted);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.checkbox input:checked + .checkmark {
+  background: var(--primary);
+  border-color: transparent;
+}
+
+.todo-title {
+  font-weight: 600;
+}
+
+.todo-title.done {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.todo-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.todo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.todo-note {
+  font-size: 0.9rem;
+  color: var(--text);
+  margin-top: 0.5rem;
+  background: var(--surface);
+  padding: 0.6rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  max-height: 8rem;
+  overflow: auto;
+}
+
+.toggle-note {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.journal-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 24rem;
+  overflow: auto;
+}
+
+.journal-item {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--surface-2);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.journal-time {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.journal-content {
+  max-height: 5.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.journal-content.expanded {
+  max-height: none;
+}
+
+.journal-content::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 1.2rem;
+  background: linear-gradient(transparent, var(--surface-2));
+  pointer-events: none;
+}
+
+.journal-content.expanded::after {
+  display: none;
+}
+
+.journal-tags {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.journal-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.export-panel {
+  margin: 0 1.5rem 1.5rem;
+}
+
+#toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: var(--primary);
+  color: var(--primary-contrast);
+  padding: 0.75rem 1.1rem;
+  border-radius: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translateY(20px);
+  z-index: 20;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-grid {
+    min-height: 12rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .top-controls {
+    padding: 1rem;
+  }
+
+  .filter-group input,
+  .filter-group select {
+    width: 100%;
+  }
+
+  .search-group input {
+    min-width: 12rem;
+  }
+
+  .journal-item {
+    grid-template-columns: 70px 1fr;
+  }
+}
+
+/* 自检：刷新后数据仍在；导出/导入可恢复；日历同步与排序即时保存；导出正确；移动端、主题、键盘、空值/长文本处理 */
