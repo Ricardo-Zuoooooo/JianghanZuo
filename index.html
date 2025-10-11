@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-Hans">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -28,23 +28,23 @@
       </div>
     </div>
     <div class="header-right">
-      <button id="themeToggle" class="icon-btn" aria-label="切换主题" title="切换主题 (T)">
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle theme" title="Toggle theme (T)">
         <span class="icon">🌗</span>
       </button>
     </div>
   </header>
 
   <main class="layout">
-    <section class="calendar-panel" aria-label="日历">
+    <section class="calendar-panel" aria-label="Calendar">
       <div class="calendar-nav">
-        <button id="prevPeriod" class="btn" type="button" aria-label="上一月">◀</button>
+        <button id="prevPeriod" class="btn" type="button" aria-label="Previous month">◀</button>
         <div id="calendarLabel" aria-live="polite"></div>
-        <button id="nextPeriod" class="btn" type="button" aria-label="下一月">▶</button>
+        <button id="nextPeriod" class="btn" type="button" aria-label="Next month">▶</button>
       </div>
       <div id="calendarGrid" class="calendar-grid" role="grid"></div>
     </section>
 
-    <section class="day-panel" aria-label="当日详情">
+    <section class="day-panel" aria-label="Selected day details">
       <div class="day-header">
         <div>
           <h2 id="selectedDateLabel"></h2>
@@ -53,24 +53,24 @@
 
       <section class="todo-section" aria-labelledby="todoHeading">
         <div class="section-header simple">
-          <h3 id="todoHeading">代办</h3>
-          <button id="newTodoBtn" class="circle-btn" type="button" title="新建代办 (N)" aria-label="新建代办">＋</button>
+          <h3 id="todoHeading">Todos</h3>
+          <button id="newTodoBtn" class="circle-btn" type="button" title="New todo (N)" aria-label="New todo">＋</button>
         </div>
-        <form id="todoForm" class="card inline-form" aria-label="新增或编辑代办" hidden>
+        <form id="todoForm" class="card inline-form" aria-label="Create or edit todo" hidden>
           <div class="form-row">
-            <input id="todoTitle" name="title" type="text" placeholder="代办标题" required />
+            <input id="todoTitle" name="title" type="text" placeholder="Todo title" required />
             <select id="todoPriority" name="priority" required>
-              <option value="3">优先级 3</option>
-              <option value="5">优先级 5</option>
-              <option value="4">优先级 4</option>
-              <option value="2">优先级 2</option>
-              <option value="1">优先级 1</option>
+              <option value="3">Priority 3</option>
+              <option value="5">Priority 5</option>
+              <option value="4">Priority 4</option>
+              <option value="2">Priority 2</option>
+              <option value="1">Priority 1</option>
             </select>
           </div>
-          <textarea id="todoNote" name="note" rows="2" placeholder="备注 (Enter 保存, Esc 取消)"></textarea>
+          <textarea id="todoNote" name="note" rows="2" placeholder="Notes (Enter to save, Esc to cancel)"></textarea>
           <div class="form-actions">
-            <button type="submit" class="btn primary">保存代办</button>
-            <button type="button" id="cancelTodo" class="btn ghost">取消</button>
+            <button type="submit" class="btn primary">Save Todo</button>
+            <button type="button" id="cancelTodo" class="btn ghost">Cancel</button>
           </div>
         </form>
         <ul id="todoList" class="todo-list" aria-live="polite"></ul>
@@ -78,19 +78,19 @@
 
       <section class="journal-section" aria-labelledby="journalHeading">
         <div class="section-header simple">
-          <h3 id="journalHeading">日记 / 活动</h3>
-          <button id="newJournalBtn" class="circle-btn" type="button" title="新建日记 (J)" aria-label="新建日记">＋</button>
+          <h3 id="journalHeading">Journal / Activities</h3>
+          <button id="newJournalBtn" class="circle-btn" type="button" title="New journal entry (J)" aria-label="New journal entry">＋</button>
         </div>
-        <form id="journalForm" class="card quick-entry inline-form" aria-label="新增或编辑日记" hidden>
+        <form id="journalForm" class="card quick-entry inline-form" aria-label="Create or edit journal entry" hidden>
           <div class="form-row">
             <input id="journalDate" type="date" required />
             <input id="journalTime" type="time" required />
-            <input id="journalTags" type="text" placeholder="标签 (空格或逗号分隔)" />
+            <input id="journalTags" type="text" placeholder="Tags (space or comma separated)" />
           </div>
-          <textarea id="journalContent" rows="2" placeholder="记录今天 (Enter 保存, Shift+Enter 换行)" required></textarea>
+          <textarea id="journalContent" rows="2" placeholder="Record today (Enter to save, Shift+Enter for newline)" required></textarea>
           <div class="form-actions">
-            <button type="submit" class="btn primary">保存日记</button>
-            <button type="button" id="cancelJournal" class="btn ghost">取消</button>
+            <button type="submit" class="btn primary">Save Entry</button>
+            <button type="button" id="cancelJournal" class="btn ghost">Cancel</button>
           </div>
         </form>
         <ol id="journalTimeline" class="journal-timeline" aria-live="polite"></ol>
@@ -98,22 +98,22 @@
     </section>
   </main>
 
-  <section class="export-panel" aria-label="数据导出">
-    <h3>导出</h3>
+  <section class="export-panel" aria-label="Export data">
+    <h3>Export</h3>
     <div class="export-card export-combined">
       <div class="export-row">
         <div class="export-field">
-          <label for="exportDateFrom">开始日期</label>
+          <label for="exportDateFrom">Start date</label>
           <input id="exportDateFrom" type="date" />
         </div>
         <div class="export-field">
-          <label for="exportDateTo">结束日期</label>
+          <label for="exportDateTo">End date</label>
           <input id="exportDateTo" type="date" />
         </div>
       </div>
       <div class="export-actions">
-        <button id="exportJournalTxt" class="btn" type="button">导出日记 TXT</button>
-        <button id="exportTodosTxtRange" class="btn" type="button">导出代办 TXT</button>
+        <button id="exportJournalTxt" class="btn" type="button">Export journal TXT</button>
+        <button id="exportTodosTxtRange" class="btn" type="button">Export todo TXT</button>
       </div>
     </div>
   </section>
@@ -130,11 +130,11 @@
           <div class="item-meta todo-meta"></div>
         </div>
       </div>
-      <div class="item-actions" role="group" aria-label="代办操作">
-        <button class="icon-action up" type="button" title="上移">↑</button>
-        <button class="icon-action down" type="button" title="下移">↓</button>
-        <button class="icon-action edit" type="button" title="编辑">✎</button>
-        <button class="icon-action delete" type="button" title="删除">✕</button>
+      <div class="item-actions" role="group" aria-label="Todo actions">
+        <button class="icon-action up" type="button" title="Move up">↑</button>
+        <button class="icon-action down" type="button" title="Move down">↓</button>
+        <button class="icon-action edit" type="button" title="Edit">✎</button>
+        <button class="icon-action delete" type="button" title="Delete">✕</button>
       </div>
     </li>
   </template>
@@ -148,9 +148,9 @@
           <div class="item-meta journal-meta"></div>
         </div>
       </div>
-      <div class="item-actions" role="group" aria-label="日记操作">
-        <button class="icon-action edit" type="button" title="编辑">✎</button>
-        <button class="icon-action delete" type="button" title="删除">✕</button>
+      <div class="item-actions" role="group" aria-label="Journal actions">
+        <button class="icon-action edit" type="button" title="Edit">✎</button>
+        <button class="icon-action delete" type="button" title="Delete">✕</button>
       </div>
     </li>
   </template>

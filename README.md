@@ -3,23 +3,23 @@
 
 # Getting Started
 
-## Daily Manager 单页应用本地使用指南
+## Daily Manager single-page app usage
 
-仓库根目录下的 `index.html`、`styles.css` 与 `app.js` 组成了日常管理的前端应用，不需要额外的后端或构建流程。要在本地体验：
+The `index.html`, `styles.css`, and `app.js` files in the repository root make up the Daily Manager front-end. There is no backend or build step required. To run it locally:
 
-1. 克隆或下载此仓库后，确保三个文件位于同一目录（保持仓库原有结构即可）。
-2. 直接用浏览器打开 `index.html`：
-   - 在文件管理器中双击 `index.html`；或
-   - 右键选择“用浏览器打开”；或
-   - 在命令行启动临时静态服务器（可选）：
+1. Clone or download this repository so the three files stay together (keeping the repository structure is sufficient).
+2. Open `index.html` in your browser:
+   - Double-click `index.html` in your file browser, or
+   - Right-click and choose “Open with browser”, or
+   - Start an optional temporary static server:
      ```bash
      python -m http.server 8000
      ```
-     然后访问 http://localhost:8000/index.html。
-3. 首次打开时应用会以 Europe/London 时区运行，并自动把数据保存在浏览器的 `localStorage` 中（键名：`dm_journal`、`dm_todos`、`dm_settings`）。如需切换至中国时区，可点击页面标题下方的时区标签在 Europe/London 与 China 之间快速切换。刷新页面后数据仍会保留。
-4. 如需保存或迁移数据，可在页面底部的导出模块先选择日期范围，再分别导出日记或代办的 TXT 文件并妥善保留。
+     Then visit http://localhost:8000/index.html.
+3. The app starts in the Europe/London timezone and persists data to `localStorage` using the keys `dm_journal`, `dm_todos`, and `dm_settings`. Click the timezone label below the title to switch between Europe/London and China. Refreshing the page keeps your data intact.
+4. To archive or migrate your information, pick a date range in the export card at the bottom of the page and download TXT files for journal entries or todos.
 
-> 若你只想运行 Jekyll 站点，请继续阅读下方原有的“Running locally”章节。
+> If you only need the Jekyll site, continue with the existing “Running locally” section below.
 
 1. Register a GitHub account if you don't have one and confirm your e-mail (required!)
 1. Click the "Use this template" button in the top right.

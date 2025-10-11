@@ -65,7 +65,7 @@ const formatter = {
   label(date) {
     const tz = getTimeZone();
     const base = new Date(`${date}T12:00:00Z`);
-    return new Intl.DateTimeFormat("zh-Hans", {
+    return new Intl.DateTimeFormat("en-GB", {
       timeZone: tz,
       year: "numeric",
       month: "long",
@@ -142,7 +142,7 @@ function updateTimezoneDisplay() {
   if (button) {
     const label = getTimeZoneLabel(getTimeZone());
     button.textContent = label;
-    button.setAttribute("aria-label", `当前时区：${label}，点击切换`);
+    button.setAttribute("aria-label", `Current timezone: ${label}. Click to switch.`);
     button.setAttribute("title", `${label}`);
   }
   const menu = document.getElementById("timezoneMenu");
@@ -465,14 +465,14 @@ function renderTodos() {
     node.dataset.id = todo.id;
     const checkbox = node.querySelector(".todo-done");
     checkbox.checked = !!todo.done;
-    checkbox.setAttribute("aria-label", todo.done ? "标记为未完成" : "标记为已完成");
+    checkbox.setAttribute("aria-label", todo.done ? "Mark as incomplete" : "Mark as complete");
     const titleEl = node.querySelector(".todo-title");
     titleEl.textContent = `${todo.order}. ${todo.title}`;
     titleEl.classList.toggle("done", todo.done);
     const metaEl = node.querySelector(".todo-meta");
     metaEl.innerHTML = "";
     const statusSpan = document.createElement("span");
-    statusSpan.textContent = `优先级 ${todo.priority} · ${todo.done ? "已完成" : "未完成"}`;
+    statusSpan.textContent = `Priority ${todo.priority} · ${todo.done ? "Completed" : "Incomplete"}`;
     metaEl.appendChild(statusSpan);
     if (todo.note) {
       const noteSpan = document.createElement("span");
@@ -510,12 +510,12 @@ function renderJournal() {
         const toggle = document.createElement("button");
         toggle.type = "button";
         toggle.className = "inline-link toggle-journal";
-        toggle.textContent = "展开全文";
+        toggle.textContent = "Expand";
         toggle.setAttribute("aria-expanded", "false");
         toggle.setAttribute("aria-controls", contentId);
         toggle.addEventListener("click", () => {
           const collapsed = contentEl.classList.toggle("collapsed");
-          toggle.textContent = collapsed ? "展开全文" : "收起";
+          toggle.textContent = collapsed ? "Expand" : "Collapse";
           toggle.setAttribute("aria-expanded", String(!collapsed));
           if (!collapsed) {
             contentEl.textContent = entry.content;
@@ -529,7 +529,7 @@ function renderJournal() {
       timeSpan.textContent = `${entry.date} ${entry.time}`;
       metaEl.appendChild(timeSpan);
       const tagsSpan = document.createElement("span");
-      tagsSpan.textContent = entry.tags?.length ? entry.tags.map((tag) => `#${tag}`).join(" ") : "无标签";
+      tagsSpan.textContent = entry.tags?.length ? entry.tags.map((tag) => `#${tag}`).join(" ") : "No tags";
       metaEl.appendChild(tagsSpan);
       fragment.appendChild(node);
     });
@@ -572,9 +572,9 @@ function attachTodoEvents() {
   list.querySelectorAll(".item-actions .delete").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.closest(".todo-item").dataset.id;
-      if (confirm("确定删除这条代办吗？")) {
+      if (confirm("Delete this todo?")) {
         deleteTodo(id);
-        showToast("代办已删除");
+        showToast("Todo deleted");
       }
     });
   });
@@ -617,9 +617,9 @@ function attachJournalEvents() {
   document.querySelectorAll(".journal-item .delete").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.closest(".journal-item").dataset.id;
-      if (confirm("确定删除这条日记吗？")) {
+      if (confirm("Delete this journal entry?")) {
         deleteJournal(id);
-        showToast("日记已删除");
+        showToast("Journal entry deleted");
       }
     });
   });
@@ -637,7 +637,8 @@ function renderCalendar() {
   const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
   const totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
 
-  label.textContent = `${year} 年 ${month + 1} 月`;
+  const labelDate = new Date(Date.UTC(year, month, 1));
+  label.textContent = labelDate.toLocaleString("en-GB", { month: "long", year: "numeric" });
 
   for (let i = 0; i < totalCells; i++) {
     if (i < firstWeekday || i >= firstWeekday + daysInMonth) {
@@ -664,8 +665,8 @@ function renderCalendar() {
       star.textContent = "★";
       star.setAttribute("aria-hidden", "true");
       cell.appendChild(star);
-      cell.setAttribute("aria-label", `${date} 有记录`);
-      cell.title = `${date} 有记录`;
+      cell.setAttribute("aria-label", `${date} has entries`);
+      cell.title = `${date} has entries`;
     } else {
       cell.setAttribute("aria-label", date);
       cell.title = date;
@@ -797,7 +798,7 @@ function handleTodoSubmit(event) {
   event.preventDefault();
   const title = document.getElementById("todoTitle").value.trim();
   if (!title) {
-    showToast("标题不能为空");
+    showToast("Title cannot be empty");
     document.getElementById("todoTitle").focus();
     return;
   }
@@ -819,7 +820,7 @@ function handleTodoSubmit(event) {
   closeTodoForm();
   renderTodos();
   renderCalendar();
-  showToast("代办已保存");
+  showToast("Todo saved");
 }
 
 function handleJournalSubmit(event) {
@@ -828,7 +829,7 @@ function handleJournalSubmit(event) {
   const time = document.getElementById("journalTime").value;
   const content = document.getElementById("journalContent").value.trim();
   if (!date || !time || !content) {
-    showToast("日期、时间与内容不能为空");
+    showToast("Date, time, and content are required");
     return;
   }
   const tags = parseTags(document.getElementById("journalTags").value);
@@ -849,7 +850,7 @@ function handleJournalSubmit(event) {
     renderCalendar();
   }
   closeJournalForm();
-  showToast("日记已保存");
+  showToast("Journal entry saved");
 }
 
 function getExportRange() {
@@ -859,11 +860,11 @@ function getExportRange() {
   const from = fromInput?.value || fallback;
   const to = toInput?.value || fallback;
   if (!from || !to) {
-    showToast("请先选择导出日期范围");
+    showToast("Select a date range before exporting");
     return null;
   }
   if (from > to) {
-    showToast("日期范围不正确");
+    showToast("Date range is invalid");
     return null;
   }
   return { from, to };
@@ -881,16 +882,16 @@ function exportJournalTxt() {
       return a.date.localeCompare(b.date);
     });
   if (!entries.length) {
-    showToast("所选范围无日记记录");
+    showToast("No journal entries in the selected range");
     return;
   }
   const lines = entries.map((entry) => {
     const tags = entry.tags?.length ? ` [${entry.tags.join(", ")}]` : "";
     return `${entry.date} ${entry.time}${tags}\n${entry.content}`;
   });
-  const content = [`日记导出 (${from} ~ ${to})`, "", ...lines].join("\n\n");
+  const content = [`Journal export (${from} ~ ${to})`, "", ...lines].join("\n\n");
   downloadFile(`journal_${from}_${to}.txt`, content, { mime: "text/plain;charset=utf-8", bom: true });
-  showToast("日记已导出");
+  showToast("Journal TXT exported");
 }
 
 function exportTodosTxtRange() {
@@ -905,7 +906,7 @@ function exportTodosTxtRange() {
       return a.date.localeCompare(b.date);
     });
   if (!todos.length) {
-    showToast("当前筛选无代办");
+    showToast("No todos for the current filters");
     return;
   }
   const lines = todos.map((todo) => {
@@ -913,9 +914,9 @@ function exportTodosTxtRange() {
     const note = todo.note ? ` — ${todo.note}` : "";
     return `${todo.date} #${todo.order} [P${todo.priority}] ${status} ${todo.title}${note}`;
   });
-  const content = [`代办导出 (${from} ~ ${to})`, "", ...lines].join("\n");
+  const content = [`Todo export (${from} ~ ${to})`, "", ...lines].join("\n");
   downloadFile(`todos_${from}_${to}.txt`, content, { mime: "text/plain;charset=utf-8", bom: true });
-  showToast("代办已导出");
+  showToast("Todo TXT exported");
 }
 
 function downloadFile(filename, content, options = {}) {
@@ -1006,4 +1007,4 @@ function initialize() {
 
 window.addEventListener("DOMContentLoaded", initialize);
 
-// 自检：刷新后数据仍在；TXT 导出保持顺序；日历选择同步；筛选即时；键盘快捷键和焦点可用；拖拽/按钮排序立即保存。
+// Self-check: data persists after refresh; TXT export preserves order; calendar selection stays in sync; filters respond immediately; keyboard shortcuts and focus work; drag/drop or button sorting saves instantly.
