@@ -17,7 +17,7 @@
      ```
      然后访问 http://localhost:8000/index.html。
 3. 首次打开时应用会以 Europe/London 时区运行，并自动把数据保存在浏览器的 `localStorage` 中（键名：`dm_journal`、`dm_todos`、`dm_settings`）。如需切换至中国时区，可点击页面标题下方的时区标签在 Europe/London 与 China 之间快速切换。刷新页面后数据仍会保留。
-4. 如需保存或迁移数据，可在页面底部的导出模块生成日记或代办的 TXT 文件并妥善保留。
+4. 如需保存或迁移数据，可在页面底部的导出模块先选择日期范围，再分别导出日记或代办的 TXT 文件并妥善保留。
 
 > 若你只想运行 Jekyll 站点，请继续阅读下方原有的“Running locally”章节。
 

@@ -189,39 +189,6 @@ select:focus-visible {
   transform: none;
 }
 
-.top-controls {
-  padding: 1rem 1.5rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
-}
-
-.filter-group {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: flex-end;
-}
-
-.filter-group label {
-  display: block;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-}
-
-.filter-group input,
-.filter-group select {
-  width: 9rem;
-  padding: 0.35rem 0.5rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: inherit;
-}
-
 .layout {
   flex: 1;
   display: grid;
@@ -598,12 +565,6 @@ textarea {
   margin: 0 1.5rem 1.5rem;
 }
 
-.export-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-}
-
 .export-card {
   background: var(--surface-2);
   border-radius: 16px;
@@ -612,11 +573,6 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-}
-
-.export-card h4 {
-  margin: 0;
-  font-size: 1rem;
 }
 
 .export-field {
@@ -634,10 +590,25 @@ textarea {
   color: inherit;
 }
 
-.export-hint {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.85rem;
+.export-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.export-row .export-field {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.export-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.export-actions .btn {
+  flex: 1 1 180px;
 }
 
 #toast {
@@ -679,15 +650,6 @@ textarea {
   .header-right {
     width: 100%;
     justify-content: space-between;
-  }
-
-  .top-controls {
-    padding: 1rem;
-  }
-
-  .filter-group input,
-  .filter-group select {
-    width: 100%;
   }
 
   .journal-item {

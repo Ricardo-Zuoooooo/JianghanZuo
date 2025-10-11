@@ -34,42 +34,6 @@
     </div>
   </header>
 
-  <div class="top-controls">
-    <div class="filter-group">
-      <div>
-        <label for="filterDateFrom">开始日期</label>
-        <input id="filterDateFrom" type="date" />
-      </div>
-      <div>
-        <label for="filterDateTo">结束日期</label>
-        <input id="filterDateTo" type="date" />
-      </div>
-      <div>
-        <label for="filterStatus">完成状态</label>
-        <select id="filterStatus">
-          <option value="all">全部</option>
-          <option value="pending">未完成</option>
-          <option value="done">已完成</option>
-        </select>
-      </div>
-      <div>
-        <label for="filterPriority">优先级</label>
-        <select id="filterPriority">
-          <option value="all">全部</option>
-          <option value="5">5</option>
-          <option value="4">4</option>
-          <option value="3">3</option>
-          <option value="2">2</option>
-          <option value="1">1</option>
-        </select>
-      </div>
-      <div>
-        <label for="filterTags">标签 (逗号分隔)</label>
-        <input id="filterTags" type="text" placeholder="tag1,tag2" />
-      </div>
-    </div>
-  </div>
-
   <main class="layout">
     <section class="calendar-panel" aria-label="日历">
       <div class="calendar-nav">
@@ -136,22 +100,19 @@
 
   <section class="export-panel" aria-label="数据导出">
     <h3>导出</h3>
-    <div class="export-grid">
-      <div class="export-card">
-        <h4>日记导出</h4>
+    <div class="export-card export-combined">
+      <div class="export-row">
         <div class="export-field">
-          <label for="journalExportFrom">开始日期</label>
-          <input id="journalExportFrom" type="date" />
+          <label for="exportDateFrom">开始日期</label>
+          <input id="exportDateFrom" type="date" />
         </div>
         <div class="export-field">
-          <label for="journalExportTo">结束日期</label>
-          <input id="journalExportTo" type="date" />
+          <label for="exportDateTo">结束日期</label>
+          <input id="exportDateTo" type="date" />
         </div>
-        <button id="exportJournalTxt" class="btn" type="button">导出日记 TXT</button>
       </div>
-      <div class="export-card">
-        <h4>代办导出</h4>
-        <p class="export-hint">使用上方筛选条件确定范围</p>
+      <div class="export-actions">
+        <button id="exportJournalTxt" class="btn" type="button">导出日记 TXT</button>
         <button id="exportTodosTxtRange" class="btn" type="button">导出代办 TXT</button>
       </div>
     </div>

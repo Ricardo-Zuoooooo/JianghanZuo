@@ -258,10 +258,10 @@ function setSelectedDate(date) {
   document.getElementById("journalDate").value = date;
   closeTodoForm();
   closeJournalForm();
-  const exportFrom = document.getElementById("journalExportFrom");
-  const exportTo = document.getElementById("journalExportTo");
-  if (!exportFrom.value) exportFrom.value = date;
-  if (!exportTo.value) exportTo.value = date;
+  const exportFrom = document.getElementById("exportDateFrom");
+  const exportTo = document.getElementById("exportDateTo");
+  if (exportFrom && !exportFrom.value) exportFrom.value = date;
+  if (exportTo && !exportTo.value) exportTo.value = date;
   renderTodos();
   renderJournal();
   renderCalendar();
@@ -401,11 +401,16 @@ function getGlobalSearchTerm() {
 
 function filteredTodos() {
   const search = getGlobalSearchTerm();
-  const status = document.getElementById("filterStatus").value;
-  const priority = document.getElementById("filterPriority").value;
-  const dateFrom = document.getElementById("filterDateFrom").value;
-  const dateTo = document.getElementById("filterDateTo").value;
-  const tags = parseTags(document.getElementById("filterTags").value.toLowerCase());
+  const statusEl = document.getElementById("filterStatus");
+  const priorityEl = document.getElementById("filterPriority");
+  const dateFromEl = document.getElementById("filterDateFrom");
+  const dateToEl = document.getElementById("filterDateTo");
+  const tagsEl = document.getElementById("filterTags");
+  const status = statusEl ? statusEl.value : "all";
+  const priority = priorityEl ? priorityEl.value : "all";
+  const dateFrom = dateFromEl ? dateFromEl.value : "";
+  const dateTo = dateToEl ? dateToEl.value : "";
+  const tags = parseTags((tagsEl?.value || "").toLowerCase());
 
   return state.todos.filter((todo) => {
     if (dateFrom && todo.date < dateFrom) return false;
@@ -426,9 +431,12 @@ function filteredTodos() {
 
 function filteredJournal() {
   const search = getGlobalSearchTerm();
-  const dateFrom = document.getElementById("filterDateFrom").value;
-  const dateTo = document.getElementById("filterDateTo").value;
-  const tags = parseTags(document.getElementById("filterTags").value.toLowerCase());
+  const dateFromEl = document.getElementById("filterDateFrom");
+  const dateToEl = document.getElementById("filterDateTo");
+  const tagsEl = document.getElementById("filterTags");
+  const dateFrom = dateFromEl ? dateFromEl.value : "";
+  const dateTo = dateToEl ? dateToEl.value : "";
+  const tags = parseTags((tagsEl?.value || "").toLowerCase());
 
   return state.journal.filter((entry) => {
     if (dateFrom && entry.date < dateFrom) return false;
@@ -695,7 +703,9 @@ function changeCalendarPeriod(offset) {
 function setupEventHandlers() {
   document.getElementById("themeToggle").addEventListener("click", toggleTheme);
   ["filterDateFrom", "filterDateTo", "filterStatus", "filterPriority", "filterTags"].forEach((id) => {
-    document.getElementById(id).addEventListener("input", () => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("input", () => {
       renderTodos();
       renderJournal();
       renderCalendar();
@@ -773,8 +783,14 @@ function setupEventHandlers() {
     }
   });
 
-  document.getElementById("exportJournalTxt").addEventListener("click", exportJournalTxt);
-  document.getElementById("exportTodosTxtRange").addEventListener("click", exportTodosTxtRange);
+  const exportJournalBtn = document.getElementById("exportJournalTxt");
+  const exportTodoBtn = document.getElementById("exportTodosTxtRange");
+  if (exportJournalBtn) {
+    exportJournalBtn.addEventListener("click", exportJournalTxt);
+  }
+  if (exportTodoBtn) {
+    exportTodoBtn.addEventListener("click", exportTodosTxtRange);
+  }
 }
 
 function handleTodoSubmit(event) {
@@ -836,17 +852,27 @@ function handleJournalSubmit(event) {
   showToast("日记已保存");
 }
 
-function exportJournalTxt() {
-  const from = document.getElementById("journalExportFrom").value || state.selectedDate;
-  const to = document.getElementById("journalExportTo").value || state.selectedDate;
+function getExportRange() {
+  const fromInput = document.getElementById("exportDateFrom");
+  const toInput = document.getElementById("exportDateTo");
+  const fallback = state.selectedDate;
+  const from = fromInput?.value || fallback;
+  const to = toInput?.value || fallback;
   if (!from || !to) {
     showToast("请先选择导出日期范围");
-    return;
+    return null;
   }
   if (from > to) {
     showToast("日期范围不正确");
-    return;
+    return null;
   }
+  return { from, to };
+}
+
+function exportJournalTxt() {
+  const range = getExportRange();
+  if (!range) return;
+  const { from, to } = range;
   const entries = state.journal
     .filter((entry) => entry.date >= from && entry.date <= to)
     .slice()
@@ -868,7 +894,11 @@ function exportJournalTxt() {
 }
 
 function exportTodosTxtRange() {
+  const range = getExportRange();
+  if (!range) return;
+  const { from, to } = range;
   const todos = filteredTodos()
+    .filter((todo) => todo.date >= from && todo.date <= to)
     .slice()
     .sort((a, b) => {
       if (a.date === b.date) return a.order - b.order;
@@ -883,8 +913,8 @@ function exportTodosTxtRange() {
     const note = todo.note ? ` — ${todo.note}` : "";
     return `${todo.date} #${todo.order} [P${todo.priority}] ${status} ${todo.title}${note}`;
   });
-  const content = ["代办导出 (当前筛选)", "", ...lines].join("\n");
-  downloadFile(`todos_filtered.txt`, content, { mime: "text/plain;charset=utf-8", bom: true });
+  const content = [`代办导出 (${from} ~ ${to})`, "", ...lines].join("\n");
+  downloadFile(`todos_${from}_${to}.txt`, content, { mime: "text/plain;charset=utf-8", bom: true });
   showToast("代办已导出");
 }
 
@@ -965,8 +995,10 @@ function initialize() {
   document.getElementById("journalDate").value = state.selectedDate || now.date;
   document.getElementById("journalTime").value = now.time;
   document.getElementById("selectedDateLabel").textContent = formatter.label(state.selectedDate);
-  document.getElementById("journalExportFrom").value = state.selectedDate;
-  document.getElementById("journalExportTo").value = state.selectedDate;
+  const exportFrom = document.getElementById("exportDateFrom");
+  const exportTo = document.getElementById("exportDateTo");
+  if (exportFrom) exportFrom.value = state.selectedDate;
+  if (exportTo) exportTo.value = state.selectedDate;
   renderCalendar();
   renderTodos();
   renderJournal();
