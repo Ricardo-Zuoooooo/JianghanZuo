@@ -16,12 +16,6 @@
       <button id="themeToggle" class="icon-btn" aria-label="切换主题" title="切换主题 (T)">
         <span class="icon">🌗</span>
       </button>
-      <div class="backup-controls" role="group" aria-label="备份与还原">
-        <button id="exportBackup" class="btn" type="button">导出备份</button>
-        <label for="importBackup" class="btn" tabindex="0">导入备份
-          <input id="importBackup" type="file" accept="application/json" />
-        </label>
-      </div>
     </div>
   </header>
 
@@ -67,38 +61,28 @@
 
   <main class="layout">
     <section class="calendar-panel" aria-label="日历">
-      <div class="calendar-controls">
-        <div class="view-switch" role="tablist">
-          <button data-view="month" class="active" role="tab" aria-selected="true">月</button>
-          <button data-view="week" role="tab" aria-selected="false">周</button>
-          <button data-view="day" role="tab" aria-selected="false">日</button>
-        </div>
-        <div class="calendar-nav">
-          <button id="prevPeriod" class="btn" type="button" aria-label="上一段">◀</button>
-          <div id="calendarLabel" aria-live="polite"></div>
-          <button id="nextPeriod" class="btn" type="button" aria-label="下一段">▶</button>
-        </div>
+      <div class="calendar-nav">
+        <button id="prevPeriod" class="btn" type="button" aria-label="上一月">◀</button>
+        <div id="calendarLabel" aria-live="polite"></div>
+        <button id="nextPeriod" class="btn" type="button" aria-label="下一月">▶</button>
       </div>
       <div id="calendarGrid" class="calendar-grid" role="grid"></div>
     </section>
 
     <section class="day-panel" aria-label="当日详情">
       <div class="day-header">
-        <h2 id="selectedDateLabel"></h2>
-        <div class="day-actions">
-          <button id="newTodoBtn" class="btn" type="button" title="新建代办 (N)">+ 代办</button>
-          <button id="newJournalBtn" class="btn" type="button" title="新建日记 (J)">+ 日记</button>
+        <div>
+          <h2 id="selectedDateLabel"></h2>
+          <p class="day-subtitle">在此日期下管理代办与日记</p>
         </div>
       </div>
 
       <section class="todo-section" aria-labelledby="todoHeading">
-        <div class="section-header">
-          <h3 id="todoHeading">当日代办</h3>
-          <div class="todo-export">
-            <button id="exportTodosCsv" class="btn" type="button">导出当日 CSV</button>
-          </div>
+        <div class="section-header simple">
+          <h3 id="todoHeading">代办</h3>
+          <button id="newTodoBtn" class="circle-btn" type="button" title="新建代办 (N)" aria-label="新建代办">＋</button>
         </div>
-        <form id="todoForm" class="card" aria-label="新增代办">
+        <form id="todoForm" class="card inline-form" aria-label="新增或编辑代办" hidden>
           <div class="form-row">
             <input id="todoTitle" name="title" type="text" placeholder="代办标题" required />
             <select id="todoPriority" name="priority" required>
@@ -119,17 +103,11 @@
       </section>
 
       <section class="journal-section" aria-labelledby="journalHeading">
-        <div class="section-header">
+        <div class="section-header simple">
           <h3 id="journalHeading">日记 / 活动</h3>
-          <div class="journal-export">
-            <label>导出范围</label>
-            <input id="journalExportFrom" type="date" />
-            <input id="journalExportTo" type="date" />
-            <button id="exportJournalCsv" class="btn" type="button">导出 CSV</button>
-            <button id="exportJournalJson" class="btn" type="button">导出 JSON</button>
-          </div>
+          <button id="newJournalBtn" class="circle-btn" type="button" title="新建日记 (J)" aria-label="新建日记">＋</button>
         </div>
-        <form id="journalForm" class="card quick-entry" aria-label="新增日记">
+        <form id="journalForm" class="card quick-entry inline-form" aria-label="新增或编辑日记" hidden>
           <div class="form-row">
             <input id="journalDate" type="date" required />
             <input id="journalTime" type="time" required />
@@ -147,46 +125,70 @@
   </main>
 
   <section class="export-panel" aria-label="数据导出">
-    <h3>数据导出与同步</h3>
-    <div class="export-actions">
-      <button id="exportTodosCsvRange" class="btn" type="button">导出代办 CSV (按过滤)</button>
-      <button id="exportTodosJsonRange" class="btn" type="button">导出代办 JSON (按过滤)</button>
+    <h3>导出与备份</h3>
+    <div class="export-grid">
+      <div class="export-card">
+        <h4>日记导出</h4>
+        <div class="export-field">
+          <label for="journalExportFrom">开始日期</label>
+          <input id="journalExportFrom" type="date" />
+        </div>
+        <div class="export-field">
+          <label for="journalExportTo">结束日期</label>
+          <input id="journalExportTo" type="date" />
+        </div>
+        <button id="exportJournalTxt" class="btn" type="button">导出日记 TXT</button>
+      </div>
+      <div class="export-card">
+        <h4>代办导出</h4>
+        <p class="export-hint">使用上方筛选条件确定范围</p>
+        <button id="exportTodosTxtRange" class="btn" type="button">导出代办 TXT</button>
+      </div>
+      <div class="export-card">
+        <h4>备份</h4>
+        <div class="backup-controls" role="group" aria-label="备份与还原">
+          <button id="exportBackup" class="btn" type="button">导出备份</button>
+          <label for="importBackup" class="btn" tabindex="0">导入备份
+            <input id="importBackup" type="file" accept="application/json" />
+          </label>
+        </div>
+      </div>
     </div>
   </section>
 
   <template id="todoItemTemplate">
     <li class="todo-item" draggable="true">
-      <div class="todo-main">
-        <label class="checkbox">
+      <div class="item-main">
+        <label class="item-checkbox">
           <input type="checkbox" class="todo-done" />
-          <span class="checkmark" aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
         </label>
-        <div class="todo-content">
-          <div class="todo-title"></div>
-          <div class="todo-meta"></div>
-          <button class="toggle-note" type="button">展开备注</button>
-          <div class="todo-note" hidden></div>
+        <div class="item-content">
+          <div class="item-title todo-title"></div>
+          <div class="item-meta todo-meta"></div>
         </div>
       </div>
-      <div class="todo-actions" role="group" aria-label="代办操作">
-        <button class="btn ghost up" type="button" title="上移">↑</button>
-        <button class="btn ghost down" type="button" title="下移">↓</button>
-        <button class="btn ghost edit" type="button" title="编辑">编辑</button>
-        <button class="btn ghost delete" type="button" title="删除">删除</button>
+      <div class="item-actions" role="group" aria-label="代办操作">
+        <button class="icon-action up" type="button" title="上移">↑</button>
+        <button class="icon-action down" type="button" title="下移">↓</button>
+        <button class="icon-action edit" type="button" title="编辑">✎</button>
+        <button class="icon-action delete" type="button" title="删除">✕</button>
       </div>
     </li>
   </template>
 
   <template id="journalItemTemplate">
     <li class="journal-item">
-      <div class="journal-time"></div>
-      <div class="journal-body">
-        <div class="journal-content"></div>
-        <div class="journal-tags"></div>
-        <div class="journal-actions" role="group" aria-label="日记操作">
-          <button class="btn ghost edit" type="button">编辑</button>
-          <button class="btn ghost delete" type="button">删除</button>
+      <div class="item-main">
+        <div class="journal-bullet" aria-hidden="true"></div>
+        <div class="item-content">
+          <div class="item-title journal-content"></div>
+          <div class="item-meta journal-meta"></div>
         </div>
+      </div>
+      <div class="item-actions" role="group" aria-label="日记操作">
+        <button class="icon-action edit" type="button" title="编辑">✎</button>
+        <button class="icon-action delete" type="button" title="删除">✕</button>
       </div>
     </li>
   </template>

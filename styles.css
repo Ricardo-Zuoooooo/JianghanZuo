@@ -81,6 +81,7 @@ a {
 }
 
 .icon-btn:focus-visible,
+.circle-btn:focus-visible,
 .btn:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
@@ -213,26 +214,16 @@ select:focus-visible {
   gap: 1rem;
 }
 
-.calendar-controls {
+.calendar-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
 }
 
-.view-switch button {
-  border: none;
-  background: var(--surface-2);
-  padding: 0.4rem 0.9rem;
-  border-radius: 20px;
-  cursor: pointer;
+.calendar-nav #calendarLabel {
   font-weight: 600;
-  color: var(--muted);
-}
-
-.view-switch button.active {
-  background: var(--primary);
-  color: var(--primary-contrast);
+  font-size: 1.05rem;
 }
 
 .calendar-grid {
@@ -242,46 +233,69 @@ select:focus-visible {
   min-height: 18rem;
 }
 
-.calendar-cell {
+.calendar-day {
+  position: relative;
   background: var(--surface-2);
   border-radius: 14px;
-  padding: 0.6rem;
+  padding: 0.75rem;
+  min-height: 4.2rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: flex-start;
+  justify-content: flex-start;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: transform 0.15s ease, border-color 0.2s ease;
+  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.calendar-cell:hover,
-.calendar-cell:focus-visible {
+.calendar-day:hover,
+.calendar-day:focus-visible {
   transform: translateY(-2px);
   border-color: var(--primary);
+  box-shadow: 0 6px 16px rgba(60, 113, 245, 0.2);
 }
 
-.calendar-cell.selected {
+.calendar-day.selected {
   border-color: var(--primary);
   box-shadow: inset 0 0 0 1px var(--primary);
 }
 
-.calendar-cell .date-number {
+.calendar-day .day-number {
   font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
 }
 
-.calendar-cell .counts {
-  font-size: 0.7rem;
-  color: var(--muted);
+.calendar-day .day-star {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.calendar-day.placeholder {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+  box-shadow: none;
+  pointer-events: none;
 }
 
 .day-panel {
   gap: 1.25rem;
 }
 
+
 .day-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
+}
+
+.day-subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .section-header {
@@ -289,6 +303,39 @@ select:focus-visible {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+}
+
+.section-header.simple h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.circle-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--primary);
+  color: var(--primary-contrast);
+  font-size: 1.4rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.circle-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px rgba(60, 113, 245, 0.25);
+}
+
+.inline-form[hidden] {
+  display: none !important;
+}
+
+.inline-form {
+  margin-top: 0.75rem;
 }
 
 .card {
@@ -327,7 +374,8 @@ textarea {
   resize: vertical;
 }
 
-.todo-list {
+.todo-list,
+.journal-timeline {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -338,157 +386,236 @@ textarea {
   overflow: auto;
 }
 
-.todo-item {
+.todo-item,
+.journal-item {
   background: var(--surface-2);
-  border-radius: 14px;
-  padding: 0.8rem;
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
   display: flex;
   justify-content: space-between;
   gap: 1rem;
   border: 1px solid var(--border);
+  align-items: center;
 }
 
 .todo-item.dragging {
   opacity: 0.6;
 }
 
-.todo-main {
+.journal-item {
+  align-items: flex-start;
+}
+
+.item-main {
   display: flex;
-  gap: 0.75rem;
+  align-items: center;
+  gap: 0.85rem;
   flex: 1;
+  min-width: 0;
 }
 
-.checkbox {
+.journal-item .item-main {
+  align-items: flex-start;
+}
+
+.item-checkbox {
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
   position: relative;
-  width: 1.4rem;
-  height: 1.4rem;
 }
 
-.checkbox input {
+.item-checkbox input {
   position: absolute;
-  inset: 0;
+  inset: -4px;
   opacity: 0;
   cursor: pointer;
 }
 
-.checkmark {
-  display: block;
-  width: 100%;
-  height: 100%;
+.item-checkbox span {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
   background: transparent;
-  border-radius: 6px;
-  border: 2px solid var(--muted);
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease;
 }
 
-.checkbox input:checked + .checkmark {
+.item-checkbox:has(input:focus-visible) {
+  box-shadow: var(--focus);
+}
+
+.item-checkbox:has(input:checked) {
+  border-color: var(--primary);
+  background: rgba(60, 113, 245, 0.15);
+}
+
+.item-checkbox:has(input:checked) span {
   background: var(--primary);
-  border-color: transparent;
 }
 
-.todo-title {
+.item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.item-title {
   font-weight: 600;
+  font-size: 1rem;
+  word-break: break-word;
 }
 
-.todo-title.done {
+.item-title.done {
   text-decoration: line-through;
   color: var(--muted);
 }
 
-.todo-meta {
-  font-size: 0.75rem;
+.item-meta {
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
   color: var(--muted);
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.todo-actions {
+.todo-meta .note-text {
+  flex-basis: 100%;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+.icon-action {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.3rem;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.journal-item .item-actions {
+  align-self: stretch;
+}
+
+.icon-action:hover,
+.icon-action:focus-visible {
+  background: rgba(60, 113, 245, 0.12);
+  color: var(--primary);
+}
+
+.journal-bullet {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 0.35rem;
+}
+
+.journal-content {
+  word-break: break-word;
+}
+
+.journal-content.collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.journal-meta {
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--muted);
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.2rem;
 }
 
-.todo-note {
-  font-size: 0.9rem;
-  color: var(--text);
-  margin-top: 0.5rem;
-  background: var(--surface);
-  padding: 0.6rem;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  max-height: 8rem;
-  overflow: auto;
-}
-
-.toggle-note {
-  align-self: flex-start;
+.inline-link {
   border: none;
   background: none;
   color: var(--primary);
   cursor: pointer;
+  font-size: 0.78rem;
   padding: 0;
+  margin-top: 0.35rem;
+  text-decoration: underline;
+  align-self: flex-start;
 }
 
-.journal-timeline {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-height: 24rem;
-  overflow: auto;
-}
-
-.journal-item {
-  display: grid;
-  grid-template-columns: 90px 1fr;
-  gap: 1rem;
-  padding: 1rem;
-  background: var(--surface-2);
-  border-radius: 16px;
-  border: 1px solid var(--border);
-}
-
-.journal-time {
-  font-weight: 700;
+.inline-link:hover,
+.inline-link:focus-visible {
   color: var(--accent);
-}
-
-.journal-content {
-  max-height: 5.5rem;
-  overflow: hidden;
-  position: relative;
-}
-
-.journal-content.expanded {
-  max-height: none;
-}
-
-.journal-content::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 1.2rem;
-  background: linear-gradient(transparent, var(--surface-2));
-  pointer-events: none;
-}
-
-.journal-content.expanded::after {
-  display: none;
-}
-
-.journal-tags {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.journal-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
 }
 
 .export-panel {
   margin: 0 1.5rem 1.5rem;
+}
+
+.export-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.export-card {
+  background: var(--surface-2);
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.export-card h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.export-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.export-field input {
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: inherit;
+}
+
+.export-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.backup-controls {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 #toast {
