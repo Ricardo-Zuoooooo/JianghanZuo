@@ -510,6 +510,15 @@ textarea.auto-resize {
   border-radius: 10px;
   padding: 0.45rem 0.6rem;
   white-space: pre-wrap;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.log-operations .log-step-code {
+  font-size: 0.78rem;
+  color: var(--primary);
+  word-break: break-word;
 }
 
 

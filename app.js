@@ -59,23 +59,40 @@ function normalizeLog(log) {
 
   nextLog.steps = (log?.steps || [])
     .map((step) => {
-      const pieces = [];
-      const detail = step?.note || step?.detail || step?.commit || "";
-      if (detail) pieces.push(detail.trim());
-      if (step?.code) {
-        const codeText = step.code.trim();
-        if (codeText) pieces.push(`Code/URL: ${codeText}`);
+      const id = step?.id || crypto.randomUUID();
+      if (typeof step === "string") {
+        const noteText = step.trim();
+        if (!noteText) return null;
+        return { id, note: noteText };
       }
-      if (step?.time) {
-        const timeText = step.time.trim();
-        if (timeText) pieces.unshift(`Time ${timeText}`);
+
+      const rawNote = (step?.note || step?.detail || step?.commit || "").trim();
+      let note = rawNote;
+      let code = (step?.code || step?.codes || step?.url || step?.urls || step?.resources || "").trim();
+
+      if (!code && note.includes("Code/URL:")) {
+        const [notePart, ...codeParts] = note.split("Code/URL:");
+        note = notePart.replace(/•\s*$/, "").trim();
+        code = codeParts.join("Code/URL:").trim();
       }
-      const note = pieces.join(" • ").trim();
-      if (!note) return null;
-      return {
-        id: step?.id || crypto.randomUUID(),
-        note,
-      };
+
+      if (note.startsWith("Time ")) {
+        const [, ...rest] = note.split("•");
+        const cleaned = rest.join("•").trim();
+        if (cleaned) {
+          note = cleaned;
+        }
+      }
+
+      if (!note && !code) return null;
+      if (!note && code) {
+        note = code;
+        code = "";
+      }
+
+      const normalized = { id, note };
+      if (code) normalized.code = code;
+      return normalized;
     })
     .filter(Boolean);
 
@@ -461,12 +478,20 @@ function addLogStepRow(step = {}) {
   noteArea.placeholder = "Commit or change";
   noteArea.required = true;
   noteArea.value = step.note || "";
-  setupAutoResize(noteArea);
+
+  const codeArea = document.createElement("textarea");
+  codeArea.className = "step-code auto-resize";
+  codeArea.rows = 1;
+  codeArea.placeholder = "Code notes or URLs";
+  codeArea.value = step.code || "";
 
   row.appendChild(actions);
   row.appendChild(noteArea);
+  row.appendChild(codeArea);
 
   container.appendChild(row);
+  setupAutoResize(noteArea);
+  setupAutoResize(codeArea);
   return row;
 }
 
@@ -792,7 +817,16 @@ function renderLogs() {
       if (log.steps?.length) {
         log.steps.forEach((step) => {
           const item = document.createElement("li");
-          item.textContent = step.note;
+          item.dataset.stepId = step.id;
+          const detail = document.createElement("div");
+          detail.textContent = step.note;
+          item.appendChild(detail);
+          if (step.code) {
+            const codeBlock = document.createElement("div");
+            codeBlock.className = "log-step-code";
+            codeBlock.textContent = step.code;
+            item.appendChild(codeBlock);
+          }
           operationsEl.appendChild(item);
         });
       } else {
@@ -1189,9 +1223,11 @@ function collectLogSteps() {
   if (!container) return [];
   return Array.from(container.querySelectorAll(".log-step-row")).map((row) => {
     const note = row.querySelector(".step-note")?.value.trim() || "";
+    const code = row.querySelector(".step-code")?.value.trim() || "";
     return {
       id: row.dataset.stepId || crypto.randomUUID(),
       note,
+      ...(code ? { code } : {}),
     };
   });
 }
@@ -1339,8 +1375,12 @@ function exportLogsTxt() {
     if (log.results) lines.push(`Results: ${log.results}`);
     if (log.steps?.length) {
       lines.push("Operations:");
-      const stepLines = log.steps.map((step) => `  - ${step.note}`).join("\n");
-      lines.push(stepLines);
+      log.steps.forEach((step) => {
+        lines.push(`  - ${step.note}`);
+        if (step.code) {
+          lines.push(`      Code/URL: ${step.code}`);
+        }
+      });
     }
     return lines.join("\n");
   });
