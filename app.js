@@ -2,6 +2,7 @@ const STORAGE_KEYS = {
   journal: "dm_journal",
   todos: "dm_todos",
   settings: "dm_settings",
+  logs: "dm_labLogs",
 };
 
 const TIMEZONE_OPTIONS = [
@@ -18,11 +19,13 @@ const DEFAULT_SETTINGS = {
 const state = {
   journal: [],
   todos: [],
+  labLogs: [],
   settings: { ...DEFAULT_SETTINGS },
   selectedDate: null,
   calendarAnchor: null,
   editingTodoId: null,
   editingJournalId: null,
+  editingLogId: null,
 };
 
 function getTimeZone() {
@@ -89,9 +92,11 @@ function loadState() {
     const journalRaw = localStorage.getItem(STORAGE_KEYS.journal);
     const todosRaw = localStorage.getItem(STORAGE_KEYS.todos);
     const settingsRaw = localStorage.getItem(STORAGE_KEYS.settings);
+    const logsRaw = localStorage.getItem(STORAGE_KEYS.logs);
     if (journalRaw) state.journal = JSON.parse(journalRaw);
     if (todosRaw) state.todos = JSON.parse(todosRaw);
     if (settingsRaw) state.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(settingsRaw) };
+    if (logsRaw) state.labLogs = JSON.parse(logsRaw);
   } catch (error) {
     console.error("Failed to load local state", error);
   }
@@ -110,6 +115,7 @@ function persist(key, value) {
 function saveAll() {
   persist(STORAGE_KEYS.journal, state.journal);
   persist(STORAGE_KEYS.todos, state.todos);
+  persist(STORAGE_KEYS.logs, state.labLogs);
 }
 
 function saveSettings() {
@@ -256,14 +262,18 @@ function setSelectedDate(date) {
   state.calendarAnchor = date;
   document.getElementById("selectedDateLabel").textContent = formatter.label(date);
   document.getElementById("journalDate").value = date;
+  const logDateInput = document.getElementById("logDate");
+  if (logDateInput) logDateInput.value = date;
   closeTodoForm();
   closeJournalForm();
+  closeLogForm();
   const exportFrom = document.getElementById("exportDateFrom");
   const exportTo = document.getElementById("exportDateTo");
   if (exportFrom && !exportFrom.value) exportFrom.value = date;
   if (exportTo && !exportTo.value) exportTo.value = date;
   renderTodos();
   renderJournal();
+  renderLogs();
   renderCalendar();
   saveSettings();
 }
@@ -327,11 +337,117 @@ function closeJournalForm() {
   document.getElementById("journalContent").value = "";
 }
 
+function addLogStepRow(step = {}) {
+  const container = document.getElementById("logStepsContainer");
+  if (!container) return null;
+  const row = document.createElement("div");
+  row.className = "log-step-row";
+  row.dataset.stepId = step.id || crypto.randomUUID();
+
+  const header = document.createElement("div");
+  header.className = "step-header";
+
+  const timeInput = document.createElement("input");
+  timeInput.type = "time";
+  timeInput.className = "step-time";
+  timeInput.required = true;
+  timeInput.value = step.time || nowInTimeZone().time;
+  header.appendChild(timeInput);
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "remove-step";
+  removeBtn.textContent = "Remove";
+  removeBtn.addEventListener("click", () => {
+    row.remove();
+    if (!container.querySelector(".log-step-row")) {
+      addLogStepRow();
+    }
+  });
+  header.appendChild(removeBtn);
+
+  row.appendChild(header);
+
+  const noteArea = document.createElement("textarea");
+  noteArea.className = "step-note";
+  noteArea.placeholder = "Detail of the change";
+  noteArea.required = true;
+  noteArea.value = step.note || "";
+  row.appendChild(noteArea);
+
+  const commitInput = document.createElement("input");
+  commitInput.type = "text";
+  commitInput.className = "step-commit";
+  commitInput.placeholder = "Commit or reference";
+  commitInput.value = step.commit || "";
+  row.appendChild(commitInput);
+
+  const codeArea = document.createElement("textarea");
+  codeArea.className = "step-code";
+  codeArea.placeholder = "Code notes or URLs";
+  codeArea.value = step.code || "";
+  row.appendChild(codeArea);
+
+  container.appendChild(row);
+  return row;
+}
+
+function resetLogSteps(steps = []) {
+  const container = document.getElementById("logStepsContainer");
+  if (!container) return;
+  container.innerHTML = "";
+  if (!steps.length) {
+    addLogStepRow();
+  } else {
+    steps.forEach((step) => addLogStepRow(step));
+  }
+}
+
+function openLogForm(log = null) {
+  const form = document.getElementById("logForm");
+  if (!form) return;
+  form.hidden = false;
+  const now = nowInTimeZone();
+  const date = state.selectedDate || now.date;
+  state.editingLogId = log ? log.id : null;
+  document.getElementById("logTitle").value = log?.title || "";
+  document.getElementById("logDate").value = log?.date || date;
+  document.getElementById("logDescription").value = log?.description || "";
+  document.getElementById("logParameters").value = log?.parameters || "";
+  document.getElementById("logResources").value = log?.resources || "";
+  document.getElementById("logResults").value = log?.results || "";
+  resetLogSteps(log?.steps || [{ time: now.time }]);
+  document.getElementById("logTitle").focus();
+}
+
+function closeLogForm() {
+  const form = document.getElementById("logForm");
+  if (!form) return;
+  form.reset();
+  state.editingLogId = null;
+  resetLogSteps([]);
+  const now = nowInTimeZone();
+  const logDate = document.getElementById("logDate");
+  if (logDate) {
+    logDate.value = state.selectedDate || now.date;
+  }
+  form.hidden = true;
+}
+
 function showToast(message) {
   const toast = document.getElementById("toast");
   toast.textContent = message;
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+function getLogStartTime(log) {
+  if (!log.steps || !log.steps.length) return "99:99";
+  const times = log.steps
+    .map((step) => step.time)
+    .filter(Boolean)
+    .sort();
+  return times[0] || "99:99";
 }
 
 function upsertJournal(entry) {
@@ -366,6 +482,22 @@ function upsertTodo(todo) {
   persist(STORAGE_KEYS.todos, state.todos);
 }
 
+function upsertLog(log) {
+  const existingIdx = state.labLogs.findIndex((item) => item.id === log.id);
+  if (existingIdx >= 0) {
+    state.labLogs.splice(existingIdx, 1, log);
+  } else {
+    state.labLogs.push(log);
+  }
+  state.labLogs.sort((a, b) => {
+    if (a.date === b.date) {
+      return getLogStartTime(a).localeCompare(getLogStartTime(b)) || a.title.localeCompare(b.title);
+    }
+    return a.date.localeCompare(b.date);
+  });
+  persist(STORAGE_KEYS.logs, state.labLogs);
+}
+
 function normalizeOrders(date) {
   const sameDate = state.todos.filter((t) => t.date === date).sort((a, b) => a.order - b.order);
   sameDate.forEach((todo, index) => {
@@ -388,6 +520,13 @@ function deleteJournal(id) {
   state.journal = state.journal.filter((entry) => entry.id !== id);
   saveAll();
   renderJournal();
+  renderCalendar();
+}
+
+function deleteLog(id) {
+  state.labLogs = state.labLogs.filter((log) => log.id !== id);
+  persist(STORAGE_KEYS.logs, state.labLogs);
+  renderLogs();
   renderCalendar();
 }
 
@@ -534,6 +673,105 @@ function renderJournal() {
   attachJournalEvents();
 }
 
+function renderLogs() {
+  const list = document.getElementById("logList");
+  if (!list) return;
+  list.innerHTML = "";
+  const template = document.getElementById("logItemTemplate");
+  if (!template) return;
+  const logs = state.labLogs.filter((log) => log.date === state.selectedDate);
+  if (!logs.length) return;
+
+  const fragment = document.createDocumentFragment();
+
+  logs
+    .slice()
+    .sort((a, b) => getLogStartTime(a).localeCompare(getLogStartTime(b)) || a.title.localeCompare(b.title))
+    .forEach((log) => {
+      const node = template.content.firstElementChild.cloneNode(true);
+      node.dataset.id = log.id;
+
+      const titleEl = node.querySelector(".log-title");
+      titleEl.textContent = log.title;
+
+      const metaEl = node.querySelector(".log-meta");
+      metaEl.innerHTML = "";
+      const dateSpan = document.createElement("span");
+      dateSpan.textContent = log.date;
+      metaEl.appendChild(dateSpan);
+      const stepsSpan = document.createElement("span");
+      stepsSpan.textContent = `${log.steps?.length || 0} step${log.steps?.length === 1 ? "" : "s"}`;
+      metaEl.appendChild(stepsSpan);
+
+      const descriptionEl = node.querySelector(".log-description");
+      if (log.description) {
+        descriptionEl.textContent = log.description;
+      } else {
+        descriptionEl.remove();
+      }
+
+      const operationsEl = node.querySelector(".log-operations");
+      operationsEl.innerHTML = "";
+      if (log.steps?.length) {
+        log.steps
+          .slice()
+          .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"))
+          .forEach((step) => {
+            const item = document.createElement("li");
+            const timeSpan = document.createElement("span");
+            timeSpan.className = "operation-time";
+            timeSpan.textContent = step.time || "--:--";
+            item.appendChild(timeSpan);
+            const noteSpan = document.createElement("span");
+            noteSpan.textContent = ` ${step.note}`;
+            item.appendChild(noteSpan);
+            if (step.commit) {
+              const commitSpan = document.createElement("span");
+              commitSpan.className = "operation-commit";
+              commitSpan.textContent = `Commit: ${step.commit}`;
+              item.appendChild(commitSpan);
+            }
+            if (step.code) {
+              const codeSpan = document.createElement("span");
+              codeSpan.className = "operation-commit";
+              codeSpan.textContent = step.code;
+              item.appendChild(codeSpan);
+            }
+            operationsEl.appendChild(item);
+          });
+      } else {
+        operationsEl.remove();
+      }
+
+      const notesEl = node.querySelector(".log-notes");
+      notesEl.innerHTML = "";
+      const noteGroups = [
+        { label: "Parameters", value: log.parameters },
+        { label: "Code / Links", value: log.resources },
+        { label: "Results", value: log.results },
+      ];
+      noteGroups.forEach(({ label, value }) => {
+        if (!value) return;
+        const wrapper = document.createElement("div");
+        const strong = document.createElement("strong");
+        strong.textContent = label;
+        const body = document.createElement("div");
+        body.textContent = value;
+        wrapper.appendChild(strong);
+        wrapper.appendChild(body);
+        notesEl.appendChild(wrapper);
+      });
+      if (!notesEl.children.length) {
+        notesEl.remove();
+      }
+
+      fragment.appendChild(node);
+    });
+
+  list.appendChild(fragment);
+  attachLogEvents();
+}
+
 function attachTodoEvents() {
   const list = document.getElementById("todoList");
 
@@ -621,6 +859,27 @@ function attachJournalEvents() {
   });
 }
 
+function attachLogEvents() {
+  document.querySelectorAll(".log-item .edit").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.closest(".log-item").dataset.id;
+      const log = state.labLogs.find((item) => item.id === id);
+      if (!log) return;
+      openLogForm(log);
+    });
+  });
+
+  document.querySelectorAll(".log-item .delete").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.closest(".log-item").dataset.id;
+      if (confirm("Delete this research log?")) {
+        deleteLog(id);
+        showToast("Research log deleted");
+      }
+    });
+  });
+}
+
 function renderCalendar() {
   const grid = document.getElementById("calendarGrid");
   grid.innerHTML = "";
@@ -654,7 +913,10 @@ function renderCalendar() {
     cell.setAttribute("role", "gridcell");
     cell.innerHTML = `<span class="day-number">${String(day).padStart(2, "0")}</span>`;
 
-    const hasContent = state.todos.some((t) => t.date === date) || state.journal.some((j) => j.date === date);
+    const hasContent =
+      state.todos.some((t) => t.date === date) ||
+      state.journal.some((j) => j.date === date) ||
+      state.labLogs.some((log) => log.date === date);
     if (hasContent) {
       const star = document.createElement("span");
       star.className = "day-star";
@@ -722,6 +984,24 @@ function setupEventHandlers() {
     closeJournalForm();
   });
 
+  document.getElementById("logForm").addEventListener("submit", handleLogSubmit);
+  document.getElementById("cancelLog").addEventListener("click", () => {
+    closeLogForm();
+  });
+  const addStepBtn = document.getElementById("addLogStep");
+  if (addStepBtn) {
+    addStepBtn.addEventListener("click", () => {
+      const row = addLogStepRow();
+      row?.querySelector(".step-time")?.focus();
+    });
+  }
+  document.getElementById("logForm").addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeLogForm();
+    }
+  });
+
   document.getElementById("journalContent").addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -761,6 +1041,9 @@ function setupEventHandlers() {
   document.getElementById("newJournalBtn").addEventListener("click", () => {
     openJournalForm();
   });
+  document.getElementById("newLogBtn").addEventListener("click", () => {
+    openLogForm();
+  });
 
   document.addEventListener("keydown", (event) => {
     if (event.target.matches("input, textarea")) return;
@@ -774,6 +1057,10 @@ function setupEventHandlers() {
       event.preventDefault();
       openJournalForm();
     }
+    if (event.key.toLowerCase() === "l") {
+      event.preventDefault();
+      openLogForm();
+    }
     if (event.key.toLowerCase() === "t") {
       event.preventDefault();
       toggleTheme();
@@ -782,11 +1069,15 @@ function setupEventHandlers() {
 
   const exportJournalBtn = document.getElementById("exportJournalTxt");
   const exportTodoBtn = document.getElementById("exportTodosTxtRange");
+  const exportLogsBtn = document.getElementById("exportLogsTxt");
   if (exportJournalBtn) {
     exportJournalBtn.addEventListener("click", exportJournalTxt);
   }
   if (exportTodoBtn) {
     exportTodoBtn.addEventListener("click", exportTodosTxtRange);
+  }
+  if (exportLogsBtn) {
+    exportLogsBtn.addEventListener("click", exportLogsTxt);
   }
 }
 
@@ -845,6 +1136,72 @@ function handleJournalSubmit(event) {
   }
   closeJournalForm();
   showToast("Journal entry saved");
+}
+
+function collectLogSteps() {
+  const container = document.getElementById("logStepsContainer");
+  if (!container) return [];
+  return Array.from(container.querySelectorAll(".log-step-row")).map((row) => {
+    const time = row.querySelector(".step-time")?.value || "";
+    const note = row.querySelector(".step-note")?.value.trim() || "";
+    const commit = row.querySelector(".step-commit")?.value.trim() || "";
+    const code = row.querySelector(".step-code")?.value.trim() || "";
+    return {
+      id: row.dataset.stepId || crypto.randomUUID(),
+      time,
+      note,
+      commit,
+      code,
+    };
+  });
+}
+
+function handleLogSubmit(event) {
+  event.preventDefault();
+  const title = document.getElementById("logTitle").value.trim();
+  const date = document.getElementById("logDate").value;
+  if (!title) {
+    showToast("Title cannot be empty");
+    document.getElementById("logTitle").focus();
+    return;
+  }
+  if (!date) {
+    showToast("Date is required");
+    document.getElementById("logDate").focus();
+    return;
+  }
+  const stepsRaw = collectLogSteps();
+  const steps = stepsRaw.filter((step) => step.time || step.note || step.commit || step.code);
+  if (!steps.length) {
+    showToast("Add at least one step");
+    return;
+  }
+  if (steps.some((step) => !step.time || !step.note)) {
+    showToast("Each step needs a time and detail");
+    return;
+  }
+
+  const log = {
+    id: state.editingLogId || crypto.randomUUID(),
+    title,
+    date,
+    description: document.getElementById("logDescription").value.trim(),
+    parameters: document.getElementById("logParameters").value.trim(),
+    resources: document.getElementById("logResources").value.trim(),
+    results: document.getElementById("logResults").value.trim(),
+    steps,
+  };
+
+  upsertLog(log);
+  state.editingLogId = null;
+  if (state.selectedDate !== date) {
+    setSelectedDate(date);
+  } else {
+    renderLogs();
+    renderCalendar();
+  }
+  closeLogForm();
+  showToast("Research log saved");
 }
 
 function getExportRange() {
@@ -911,6 +1268,51 @@ function exportTodosTxtRange() {
   const content = [`Todo export (${from} ~ ${to})`, "", ...lines].join("\n");
   downloadFile(`todos_${from}_${to}.txt`, content, { mime: "text/plain;charset=utf-8", bom: true });
   showToast("Todo TXT exported");
+}
+
+function exportLogsTxt() {
+  const range = getExportRange();
+  if (!range) return;
+  const { from, to } = range;
+  const logs = state.labLogs
+    .filter((log) => log.date >= from && log.date <= to)
+    .slice()
+    .sort((a, b) => {
+      if (a.date === b.date) {
+        return getLogStartTime(a).localeCompare(getLogStartTime(b)) || a.title.localeCompare(b.title);
+      }
+      return a.date.localeCompare(b.date);
+    });
+  if (!logs.length) {
+    showToast("No research logs in the selected range");
+    return;
+  }
+
+  const blocks = logs.map((log) => {
+    const lines = [`${log.date} — ${log.title}`];
+    if (log.description) lines.push(`Description: ${log.description}`);
+    if (log.parameters) lines.push(`Parameters: ${log.parameters}`);
+    if (log.resources) lines.push(`Code / Links: ${log.resources}`);
+    if (log.steps?.length) {
+      lines.push("Operations:");
+      const stepLines = log.steps
+        .slice()
+        .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"))
+        .map((step) => {
+          const commit = step.commit ? ` [${step.commit}]` : "";
+          const code = step.code ? `\n    Code/URL: ${step.code}` : "";
+          return `  - ${step.time || "--:--"} ${step.note}${commit}${code}`;
+        })
+        .join("\n");
+      lines.push(stepLines);
+    }
+    if (log.results) lines.push(`Results: ${log.results}`);
+    return lines.join("\n");
+  });
+
+  const content = [`Research log export (${from} ~ ${to})`, "", ...blocks].join("\n\n");
+  downloadFile(`research_logs_${from}_${to}.txt`, content, { mime: "text/plain;charset=utf-8", bom: true });
+  showToast("Research log TXT exported");
 }
 
 function downloadFile(filename, content, options = {}) {
@@ -989,6 +1391,11 @@ function initialize() {
   const now = nowInTimeZone();
   document.getElementById("journalDate").value = state.selectedDate || now.date;
   document.getElementById("journalTime").value = now.time;
+  const logDateInput = document.getElementById("logDate");
+  if (logDateInput) {
+    logDateInput.value = state.selectedDate || now.date;
+  }
+  resetLogSteps([{ time: now.time }]);
   document.getElementById("selectedDateLabel").textContent = formatter.label(state.selectedDate);
   const exportFrom = document.getElementById("exportDateFrom");
   const exportTo = document.getElementById("exportDateTo");
@@ -997,6 +1404,7 @@ function initialize() {
   renderCalendar();
   renderTodos();
   renderJournal();
+  renderLogs();
 }
 
 window.addEventListener("DOMContentLoaded", initialize);

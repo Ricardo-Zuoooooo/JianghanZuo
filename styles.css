@@ -335,6 +335,10 @@ select:focus-visible {
   margin-top: 0.75rem;
 }
 
+.research-form textarea {
+  min-height: 3.5rem;
+}
+
 .card {
   background: var(--surface-2);
   border-radius: 16px;
@@ -369,6 +373,21 @@ textarea {
   background: var(--surface);
   color: inherit;
   resize: vertical;
+}
+
+.text-btn {
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+}
+
+.text-btn:hover,
+.text-btn:focus-visible {
+  background: rgba(60, 113, 245, 0.12);
 }
 
 .todo-list,
@@ -407,6 +426,150 @@ textarea {
 
 .journal-item {
   align-items: flex-start;
+}
+
+.log-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 22rem;
+  overflow: auto;
+}
+
+.log-item {
+  background: transparent;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.25rem 0;
+  align-items: flex-start;
+}
+
+.log-item:last-child {
+  border-bottom: none;
+}
+
+.log-title {
+  font-weight: 600;
+}
+
+.log-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.log-description,
+.log-notes {
+  font-size: 0.9rem;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+.log-operations {
+  list-style: none;
+  margin: 0.35rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.log-operations li {
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: rgba(60, 113, 245, 0.08);
+  border-radius: 10px;
+  padding: 0.45rem 0.6rem;
+  white-space: pre-wrap;
+}
+
+.log-operations .operation-time {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.log-operations .operation-commit {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  color: var(--muted);
+}
+
+.log-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.steps-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.log-steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.log-step-row {
+  border: 1px dashed var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.log-step-row .step-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.log-step-row input[type="time"],
+.log-step-row input[type="text"] {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: inherit;
+}
+
+.log-step-row textarea {
+  min-height: 3.5rem;
+}
+
+.remove-step {
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+}
+
+.remove-step:hover,
+.remove-step:focus-visible {
+  color: var(--primary);
+  background: rgba(60, 113, 245, 0.15);
+}
+
+.log-notes strong {
+  display: block;
+  margin-bottom: 0.25rem;
 }
 
 .item-main {

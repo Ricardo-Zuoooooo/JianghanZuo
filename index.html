@@ -88,6 +88,35 @@
         </form>
         <ol id="journalTimeline" class="journal-timeline" aria-live="polite"></ol>
       </section>
+
+      <section class="log-section" aria-labelledby="logHeading">
+        <div class="section-header simple">
+          <h3 id="logHeading">Research Logs</h3>
+          <button id="newLogBtn" class="circle-btn" type="button" title="New research log (L)" aria-label="New research log">＋</button>
+        </div>
+        <form id="logForm" class="card research-form inline-form" aria-label="Create or edit research log" hidden>
+          <div class="form-row">
+            <input id="logTitle" name="title" type="text" placeholder="Log title" required />
+            <input id="logDate" name="date" type="date" required />
+          </div>
+          <textarea id="logDescription" name="description" rows="2" placeholder="Overview or context"></textarea>
+          <textarea id="logParameters" name="parameters" rows="2" placeholder="Key parameters"></textarea>
+          <textarea id="logResources" name="resources" rows="2" placeholder="Code snippets or relevant links"></textarea>
+          <div class="log-steps">
+            <div class="steps-header">
+              <h4>Operations</h4>
+              <button type="button" id="addLogStep" class="text-btn">Add step</button>
+            </div>
+            <div id="logStepsContainer" class="log-steps-container"></div>
+          </div>
+          <textarea id="logResults" name="results" rows="2" placeholder="Results or observations"></textarea>
+          <div class="form-actions">
+            <button type="submit" class="btn primary">Save Log</button>
+            <button type="button" id="cancelLog" class="btn ghost">Cancel</button>
+          </div>
+        </form>
+        <ol id="logList" class="log-list" aria-live="polite"></ol>
+      </section>
     </section>
   </main>
 
@@ -107,6 +136,7 @@
       <div class="export-actions">
         <button id="exportJournalTxt" class="btn" type="button">Export journal TXT</button>
         <button id="exportTodosTxtRange" class="btn" type="button">Export todo TXT</button>
+        <button id="exportLogsTxt" class="btn" type="button">Export research log TXT</button>
       </div>
     </div>
   </section>
@@ -142,6 +172,25 @@
         </div>
       </div>
       <div class="item-actions" role="group" aria-label="Journal actions">
+        <button class="icon-action edit" type="button" title="Edit">✎</button>
+        <button class="icon-action delete" type="button" title="Delete">✕</button>
+      </div>
+    </li>
+  </template>
+
+  <template id="logItemTemplate">
+    <li class="log-item">
+      <div class="item-main">
+        <div class="journal-bullet" aria-hidden="true"></div>
+        <div class="item-content">
+          <div class="item-title log-title"></div>
+          <div class="item-meta log-meta"></div>
+          <div class="log-description"></div>
+          <ul class="log-operations"></ul>
+          <div class="log-notes"></div>
+        </div>
+      </div>
+      <div class="item-actions" role="group" aria-label="Research log actions">
         <button class="icon-action edit" type="button" title="Edit">✎</button>
         <button class="icon-action delete" type="button" title="Delete">✕</button>
       </div>
