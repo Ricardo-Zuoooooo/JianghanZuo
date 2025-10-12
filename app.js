@@ -865,7 +865,7 @@ function renderLogs() {
   list.innerHTML = "";
   const template = document.getElementById("logItemTemplate");
   if (!template) return;
-  const logs = state.labLogs.filter((log) => log.date === state.selectedDate);
+  const logs = state.labLogs.slice();
   if (!logs.length) return;
 
   const fragment = document.createDocumentFragment();
