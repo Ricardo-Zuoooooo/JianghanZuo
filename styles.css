@@ -335,10 +335,6 @@ select:focus-visible {
   margin-top: 0.75rem;
 }
 
-.research-form textarea {
-  min-height: 3.5rem;
-}
-
 .card {
   background: var(--surface-2);
   border-radius: 16px;
@@ -372,7 +368,13 @@ textarea {
   padding: 0.75rem;
   background: var(--surface);
   color: inherit;
-  resize: vertical;
+  resize: none;
+  min-height: 2.5rem;
+  transition: height 0.15s ease;
+}
+
+textarea.auto-resize {
+  overflow-y: hidden;
 }
 
 .text-btn {
@@ -549,7 +551,7 @@ textarea {
 }
 
 .log-step-row textarea {
-  min-height: 3.5rem;
+  min-height: 2.5rem;
 }
 
 .remove-step {

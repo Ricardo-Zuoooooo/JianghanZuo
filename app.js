@@ -28,6 +28,33 @@ const state = {
   editingLogId: null,
 };
 
+const AUTOSIZE_MAX_HEIGHT = 280;
+
+function autoResize(element) {
+  if (!element) return;
+  element.style.height = "auto";
+  const max = Number(element.dataset.autosizeMax) || AUTOSIZE_MAX_HEIGHT;
+  const newHeight = Math.min(max, element.scrollHeight || 0);
+  element.style.height = `${newHeight}px`;
+  element.style.overflowY = element.scrollHeight > max ? "auto" : "hidden";
+}
+
+function setupAutoResize(element) {
+  if (!element) return;
+  if (!element.dataset.autosizeBound) {
+    element.dataset.autosizeBound = "true";
+    element.addEventListener("input", () => autoResize(element));
+    element.addEventListener("change", () => autoResize(element));
+  }
+  requestAnimationFrame(() => autoResize(element));
+}
+
+function refreshAutosizeWithin(root) {
+  if (!root) return;
+  const elements = root.matches?.("textarea.auto-resize") ? [root] : root.querySelectorAll?.("textarea.auto-resize");
+  elements?.forEach((el) => setupAutoResize(el));
+}
+
 function getTimeZone() {
   return state.settings.timeZone || DEFAULT_SETTINGS.timeZone;
 }
@@ -100,6 +127,25 @@ function loadState() {
   } catch (error) {
     console.error("Failed to load local state", error);
   }
+  if (!Array.isArray(state.labLogs)) {
+    state.labLogs = [];
+  }
+  state.labLogs = state.labLogs.map((log) => {
+    const nextLog = { ...log };
+    nextLog.steps = (log.steps || []).map((step) => {
+      const nextStep = { ...step };
+      if (nextStep.commit) {
+        if (!nextStep.note) {
+          nextStep.note = nextStep.commit;
+        } else if (!nextStep.note.includes(nextStep.commit)) {
+          nextStep.note = `${nextStep.note} — ${nextStep.commit}`;
+        }
+        delete nextStep.commit;
+      }
+      return nextStep;
+    });
+    return nextLog;
+  });
   if (!TIMEZONE_OPTIONS.some((opt) => opt.value === state.settings.timeZone)) {
     state.settings.timeZone = DEFAULT_SETTINGS.timeZone;
   }
@@ -287,23 +333,31 @@ function parseTags(input) {
 
 function openTodoForm(todo = null) {
   const form = document.getElementById("todoForm");
+  const noteField = document.getElementById("todoNote");
   form.hidden = false;
   if (todo) {
     state.editingTodoId = todo.id;
     document.getElementById("todoTitle").value = todo.title;
-    document.getElementById("todoNote").value = todo.note || "";
+    noteField.value = todo.note || "";
   } else {
     state.editingTodoId = null;
     form.reset();
+    if (noteField) noteField.value = "";
   }
+  setupAutoResize(noteField);
   document.getElementById("todoTitle").focus();
 }
 
 function closeTodoForm() {
   const form = document.getElementById("todoForm");
+  const noteField = document.getElementById("todoNote");
   form.reset();
-  form.hidden = true;
   state.editingTodoId = null;
+  if (noteField) {
+    noteField.value = "";
+    setupAutoResize(noteField);
+  }
+  form.hidden = true;
 }
 
 function openJournalForm(entry = null) {
@@ -311,18 +365,21 @@ function openJournalForm(entry = null) {
   form.hidden = false;
   const now = nowInTimeZone();
   const date = state.selectedDate || now.date;
+  const contentField = document.getElementById("journalContent");
   if (entry) {
     state.editingJournalId = entry.id;
     document.getElementById("journalDate").value = entry.date;
     document.getElementById("journalTime").value = entry.time;
     document.getElementById("journalTags").value = entry.tags?.join(", ") || "";
-    document.getElementById("journalContent").value = entry.content;
+    contentField.value = entry.content;
   } else {
     state.editingJournalId = null;
     document.getElementById("journalForm").reset();
     document.getElementById("journalDate").value = date;
     document.getElementById("journalTime").value = now.time;
+    contentField.value = "";
   }
+  setupAutoResize(contentField);
   document.getElementById("journalContent").focus();
 }
 
@@ -332,9 +389,11 @@ function closeJournalForm() {
   const now = nowInTimeZone();
   document.getElementById("journalDate").value = state.selectedDate || now.date;
   document.getElementById("journalTime").value = now.time;
-  form.hidden = true;
   state.editingJournalId = null;
-  document.getElementById("journalContent").value = "";
+  const contentField = document.getElementById("journalContent");
+  contentField.value = "";
+  setupAutoResize(contentField);
+  form.hidden = true;
 }
 
 function addLogStepRow(step = {}) {
@@ -369,23 +428,20 @@ function addLogStepRow(step = {}) {
   row.appendChild(header);
 
   const noteArea = document.createElement("textarea");
-  noteArea.className = "step-note";
-  noteArea.placeholder = "Detail of the change";
+  noteArea.className = "step-note auto-resize";
+  noteArea.rows = 1;
+  noteArea.placeholder = "Commit or change";
   noteArea.required = true;
   noteArea.value = step.note || "";
+  setupAutoResize(noteArea);
   row.appendChild(noteArea);
 
-  const commitInput = document.createElement("input");
-  commitInput.type = "text";
-  commitInput.className = "step-commit";
-  commitInput.placeholder = "Commit or reference";
-  commitInput.value = step.commit || "";
-  row.appendChild(commitInput);
-
   const codeArea = document.createElement("textarea");
-  codeArea.className = "step-code";
+  codeArea.className = "step-code auto-resize";
+  codeArea.rows = 1;
   codeArea.placeholder = "Code notes or URLs";
   codeArea.value = step.code || "";
+  setupAutoResize(codeArea);
   row.appendChild(codeArea);
 
   container.appendChild(row);
@@ -401,6 +457,7 @@ function resetLogSteps(steps = []) {
   } else {
     steps.forEach((step) => addLogStepRow(step));
   }
+  refreshAutosizeWithin(container);
 }
 
 function openLogForm(log = null) {
@@ -417,6 +474,7 @@ function openLogForm(log = null) {
   document.getElementById("logResources").value = log?.resources || "";
   document.getElementById("logResults").value = log?.results || "";
   resetLogSteps(log?.steps || [{ time: now.time }]);
+  refreshAutosizeWithin(form);
   document.getElementById("logTitle").focus();
 }
 
@@ -426,6 +484,7 @@ function closeLogForm() {
   form.reset();
   state.editingLogId = null;
   resetLogSteps([]);
+  refreshAutosizeWithin(form);
   const now = nowInTimeZone();
   const logDate = document.getElementById("logDate");
   if (logDate) {
@@ -725,12 +784,6 @@ function renderLogs() {
             const noteSpan = document.createElement("span");
             noteSpan.textContent = ` ${step.note}`;
             item.appendChild(noteSpan);
-            if (step.commit) {
-              const commitSpan = document.createElement("span");
-              commitSpan.className = "operation-commit";
-              commitSpan.textContent = `Commit: ${step.commit}`;
-              item.appendChild(commitSpan);
-            }
             if (step.code) {
               const codeSpan = document.createElement("span");
               codeSpan.className = "operation-commit";
@@ -1144,13 +1197,11 @@ function collectLogSteps() {
   return Array.from(container.querySelectorAll(".log-step-row")).map((row) => {
     const time = row.querySelector(".step-time")?.value || "";
     const note = row.querySelector(".step-note")?.value.trim() || "";
-    const commit = row.querySelector(".step-commit")?.value.trim() || "";
     const code = row.querySelector(".step-code")?.value.trim() || "";
     return {
       id: row.dataset.stepId || crypto.randomUUID(),
       time,
       note,
-      commit,
       code,
     };
   });
@@ -1171,7 +1222,7 @@ function handleLogSubmit(event) {
     return;
   }
   const stepsRaw = collectLogSteps();
-  const steps = stepsRaw.filter((step) => step.time || step.note || step.commit || step.code);
+  const steps = stepsRaw.filter((step) => step.time || step.note || step.code);
   if (!steps.length) {
     showToast("Add at least one step");
     return;
@@ -1299,9 +1350,8 @@ function exportLogsTxt() {
         .slice()
         .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"))
         .map((step) => {
-          const commit = step.commit ? ` [${step.commit}]` : "";
           const code = step.code ? `\n    Code/URL: ${step.code}` : "";
-          return `  - ${step.time || "--:--"} ${step.note}${commit}${code}`;
+          return `  - ${step.time || "--:--"} ${step.note}${code}`;
         })
         .join("\n");
       lines.push(stepLines);
@@ -1396,6 +1446,7 @@ function initialize() {
     logDateInput.value = state.selectedDate || now.date;
   }
   resetLogSteps([{ time: now.time }]);
+  refreshAutosizeWithin(document);
   document.getElementById("selectedDateLabel").textContent = formatter.label(state.selectedDate);
   const exportFrom = document.getElementById("exportDateFrom");
   const exportTo = document.getElementById("exportDateTo");

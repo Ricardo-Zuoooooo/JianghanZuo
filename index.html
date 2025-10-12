@@ -60,7 +60,13 @@
           <div class="form-row">
             <input id="todoTitle" name="title" type="text" placeholder="Todo title" required />
           </div>
-          <textarea id="todoNote" name="note" rows="2" placeholder="Notes (Enter to save, Esc to cancel)"></textarea>
+          <textarea
+            id="todoNote"
+            class="auto-resize"
+            name="note"
+            rows="1"
+            placeholder="Notes (Enter to save, Esc to cancel)"
+          ></textarea>
           <div class="form-actions">
             <button type="submit" class="btn primary">Save Todo</button>
             <button type="button" id="cancelTodo" class="btn ghost">Cancel</button>
@@ -80,7 +86,13 @@
             <input id="journalTime" type="time" required />
             <input id="journalTags" type="text" placeholder="Tags (space or comma separated)" />
           </div>
-          <textarea id="journalContent" rows="2" placeholder="Record today (Enter to save, Shift+Enter for newline)" required></textarea>
+          <textarea
+            id="journalContent"
+            class="auto-resize"
+            rows="1"
+            placeholder="Record today (Enter to save, Shift+Enter for newline)"
+            required
+          ></textarea>
           <div class="form-actions">
             <button type="submit" class="btn primary">Save Entry</button>
             <button type="button" id="cancelJournal" class="btn ghost">Cancel</button>
@@ -99,9 +111,27 @@
             <input id="logTitle" name="title" type="text" placeholder="Log title" required />
             <input id="logDate" name="date" type="date" required />
           </div>
-          <textarea id="logDescription" name="description" rows="2" placeholder="Overview or context"></textarea>
-          <textarea id="logParameters" name="parameters" rows="2" placeholder="Key parameters"></textarea>
-          <textarea id="logResources" name="resources" rows="2" placeholder="Code snippets or relevant links"></textarea>
+          <textarea
+            id="logDescription"
+            class="auto-resize"
+            name="description"
+            rows="1"
+            placeholder="Overview or context"
+          ></textarea>
+          <textarea
+            id="logParameters"
+            class="auto-resize"
+            name="parameters"
+            rows="1"
+            placeholder="Key parameters"
+          ></textarea>
+          <textarea
+            id="logResources"
+            class="auto-resize"
+            name="resources"
+            rows="1"
+            placeholder="Code snippets or relevant links"
+          ></textarea>
           <div class="log-steps">
             <div class="steps-header">
               <h4>Operations</h4>
@@ -109,7 +139,13 @@
             </div>
             <div id="logStepsContainer" class="log-steps-container"></div>
           </div>
-          <textarea id="logResults" name="results" rows="2" placeholder="Results or observations"></textarea>
+          <textarea
+            id="logResults"
+            class="auto-resize"
+            name="results"
+            rows="1"
+            placeholder="Results or observations"
+          ></textarea>
           <div class="form-actions">
             <button type="submit" class="btn primary">Save Log</button>
             <button type="button" id="cancelLog" class="btn ghost">Cancel</button>
