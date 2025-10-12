@@ -90,7 +90,13 @@ function normalizeLog(log) {
         code = "";
       }
 
-      const normalized = { id, note };
+      const createdAt = normalizeStepCreatedAt(
+        step?.createdAt || step?.timestamp || step?.timeStamp || step?.time || step?.addedAt,
+        safeDate,
+        nextLog.createdAt
+      );
+
+      const normalized = { id, note, createdAt };
       if (code) normalized.code = code;
       return normalized;
     })
@@ -173,6 +179,66 @@ const formatter = {
     }).format(base);
   },
 };
+
+function normalizeStepCreatedAt(raw, safeDate, fallbackIso) {
+  if (raw instanceof Date) {
+    return raw.toISOString();
+  }
+  if (typeof raw === "number") {
+    const date = new Date(raw);
+    if (!Number.isNaN(date.getTime())) return date.toISOString();
+  }
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (trimmed) {
+      const direct = new Date(trimmed);
+      if (!Number.isNaN(direct.getTime())) return direct.toISOString();
+      if (/^\d{2}:\d{2}$/.test(trimmed)) {
+        const baseDate = safeDate || fallbackIso?.slice(0, 10) || new Date().toISOString().slice(0, 10);
+        const candidate = new Date(`${baseDate}T${trimmed}:00.000Z`);
+        if (!Number.isNaN(candidate.getTime())) return candidate.toISOString();
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        const candidate = new Date(`${trimmed}T00:00:00.000Z`);
+        if (!Number.isNaN(candidate.getTime())) return candidate.toISOString();
+      }
+    }
+  }
+  if (fallbackIso) return fallbackIso;
+  return new Date().toISOString();
+}
+
+function formatStepTimestamp(isoString) {
+  if (!isoString) return "";
+  const tz = getTimeZone();
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "";
+  const timePart = new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+  const datePart = new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+  return `${timePart} ${datePart}`;
+}
+
+function refreshStepRowTimestamp(row) {
+  if (!row) return;
+  const timestampEl = row.querySelector(".step-timestamp");
+  if (!timestampEl) return;
+  timestampEl.textContent = formatStepTimestamp(row.dataset.stepCreated);
+}
+
+function refreshVisibleStepTimestamps(root = document) {
+  const target = root || document;
+  target.querySelectorAll?.(".log-step-row").forEach((row) => refreshStepRowTimestamp(row));
+}
 
 function nowInTimeZone() {
   const tz = getTimeZone();
@@ -273,6 +339,10 @@ function setTimeZone(value) {
     document.getElementById("journalTime").value = now.time;
   }
   renderCalendar();
+  renderTodos();
+  renderJournal();
+  renderLogs();
+  refreshVisibleStepTimestamps(document.getElementById("logForm"));
   saveSettings();
 }
 
@@ -456,9 +526,20 @@ function addLogStepRow(step = {}) {
   const row = document.createElement("div");
   row.className = "log-step-row";
   row.dataset.stepId = step.id || crypto.randomUUID();
+  const createdAt = normalizeStepCreatedAt(
+    step?.createdAt || step?.timestamp || step?.timeStamp || step?.time || step?.addedAt,
+    state.selectedDate,
+    null
+  );
+  row.dataset.stepCreated = createdAt;
 
   const actions = document.createElement("div");
   actions.className = "step-actions";
+
+  const timestamp = document.createElement("span");
+  timestamp.className = "step-timestamp";
+  timestamp.textContent = formatStepTimestamp(createdAt);
+  actions.appendChild(timestamp);
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
@@ -492,6 +573,7 @@ function addLogStepRow(step = {}) {
   container.appendChild(row);
   setupAutoResize(noteArea);
   setupAutoResize(codeArea);
+  refreshStepRowTimestamp(row);
   return row;
 }
 
@@ -521,6 +603,7 @@ function openLogForm(log = null) {
   const defaultSteps = log?.steps?.length ? log.steps : [{}];
   resetLogSteps(defaultSteps);
   refreshAutosizeWithin(form);
+  refreshVisibleStepTimestamps(form);
   document.getElementById("logTitle").focus();
 }
 
@@ -531,6 +614,7 @@ function closeLogForm() {
   state.editingLogId = null;
   resetLogSteps([]);
   refreshAutosizeWithin(form);
+  refreshVisibleStepTimestamps(form);
   const now = nowInTimeZone();
   const logDate = document.getElementById("logDate");
   if (logDate) {
@@ -818,7 +902,17 @@ function renderLogs() {
         log.steps.forEach((step) => {
           const item = document.createElement("li");
           item.dataset.stepId = step.id;
+          if (step.createdAt) {
+            const header = document.createElement("div");
+            header.className = "log-step-header";
+            const timeLabel = document.createElement("span");
+            timeLabel.className = "log-step-time";
+            timeLabel.textContent = formatStepTimestamp(step.createdAt);
+            header.appendChild(timeLabel);
+            item.appendChild(header);
+          }
           const detail = document.createElement("div");
+          detail.className = "log-step-detail";
           detail.textContent = step.note;
           item.appendChild(detail);
           if (step.code) {
@@ -1224,9 +1318,17 @@ function collectLogSteps() {
   return Array.from(container.querySelectorAll(".log-step-row")).map((row) => {
     const note = row.querySelector(".step-note")?.value.trim() || "";
     const code = row.querySelector(".step-code")?.value.trim() || "";
+    const createdAt = normalizeStepCreatedAt(
+      row.dataset.stepCreated,
+      state.selectedDate,
+      row.dataset.stepCreated
+    );
+    row.dataset.stepCreated = createdAt;
+    refreshStepRowTimestamp(row);
     return {
       id: row.dataset.stepId || crypto.randomUUID(),
       note,
+      createdAt,
       ...(code ? { code } : {}),
     };
   });
@@ -1376,7 +1478,9 @@ function exportLogsTxt() {
     if (log.steps?.length) {
       lines.push("Operations:");
       log.steps.forEach((step) => {
-        lines.push(`  - ${step.note}`);
+        const stamp = step.createdAt ? formatStepTimestamp(step.createdAt) : "";
+        const prefix = stamp ? `[${stamp}] ` : "";
+        lines.push(`  - ${prefix}${step.note}`);
         if (step.code) {
           lines.push(`      Code/URL: ${step.code}`);
         }
@@ -1470,7 +1574,7 @@ function initialize() {
   if (logDateInput) {
     logDateInput.value = state.selectedDate || now.date;
   }
-  resetLogSteps([{ time: now.time }]);
+  resetLogSteps([{ createdAt: new Date().toISOString() }]);
   refreshAutosizeWithin(document);
   document.getElementById("selectedDateLabel").textContent = formatter.label(state.selectedDate);
   const exportFrom = document.getElementById("exportDateFrom");
