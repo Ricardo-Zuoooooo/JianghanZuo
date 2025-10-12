@@ -30,6 +30,58 @@ const state = {
 
 const AUTOSIZE_MAX_HEIGHT = 280;
 
+function normalizeLog(log) {
+  const nextLog = { ...log };
+  const createdSource =
+    log?.createdAt ||
+    log?.created_at ||
+    log?.updatedAt ||
+    (log?.steps || []).find((step) => step.time)?.time;
+  const safeDate = log?.date || new Date().toISOString().slice(0, 10);
+  const baseTime = typeof createdSource === "string" && createdSource.includes("T")
+    ? createdSource
+    : typeof createdSource === "string"
+    ? `${safeDate}T${createdSource.slice(0, 5)}:00.000Z`
+    : `${safeDate}T00:00:00.000Z`;
+  nextLog.createdAt = log?.createdAt || baseTime;
+  nextLog.updatedAt = log?.updatedAt || nextLog.createdAt;
+
+  const mergedResults = [];
+  if (log?.results) mergedResults.push(log.results);
+  if (log?.parameters) mergedResults.push(`Parameters: ${log.parameters}`);
+  if (log?.resources) mergedResults.push(`Code / Links: ${log.resources}`);
+  nextLog.results = mergedResults.join("\n").trim();
+  if (!nextLog.results) {
+    delete nextLog.results;
+  }
+  delete nextLog.parameters;
+  delete nextLog.resources;
+
+  nextLog.steps = (log?.steps || [])
+    .map((step) => {
+      const pieces = [];
+      const detail = step?.note || step?.detail || step?.commit || "";
+      if (detail) pieces.push(detail.trim());
+      if (step?.code) {
+        const codeText = step.code.trim();
+        if (codeText) pieces.push(`Code/URL: ${codeText}`);
+      }
+      if (step?.time) {
+        const timeText = step.time.trim();
+        if (timeText) pieces.unshift(`Time ${timeText}`);
+      }
+      const note = pieces.join(" • ").trim();
+      if (!note) return null;
+      return {
+        id: step?.id || crypto.randomUUID(),
+        note,
+      };
+    })
+    .filter(Boolean);
+
+  return nextLog;
+}
+
 function autoResize(element) {
   if (!element) return;
   element.style.height = "auto";
@@ -130,22 +182,7 @@ function loadState() {
   if (!Array.isArray(state.labLogs)) {
     state.labLogs = [];
   }
-  state.labLogs = state.labLogs.map((log) => {
-    const nextLog = { ...log };
-    nextLog.steps = (log.steps || []).map((step) => {
-      const nextStep = { ...step };
-      if (nextStep.commit) {
-        if (!nextStep.note) {
-          nextStep.note = nextStep.commit;
-        } else if (!nextStep.note.includes(nextStep.commit)) {
-          nextStep.note = `${nextStep.note} — ${nextStep.commit}`;
-        }
-        delete nextStep.commit;
-      }
-      return nextStep;
-    });
-    return nextLog;
-  });
+  state.labLogs = state.labLogs.map((log) => normalizeLog(log));
   if (!TIMEZONE_OPTIONS.some((opt) => opt.value === state.settings.timeZone)) {
     state.settings.timeZone = DEFAULT_SETTINGS.timeZone;
   }
@@ -403,15 +440,8 @@ function addLogStepRow(step = {}) {
   row.className = "log-step-row";
   row.dataset.stepId = step.id || crypto.randomUUID();
 
-  const header = document.createElement("div");
-  header.className = "step-header";
-
-  const timeInput = document.createElement("input");
-  timeInput.type = "time";
-  timeInput.className = "step-time";
-  timeInput.required = true;
-  timeInput.value = step.time || nowInTimeZone().time;
-  header.appendChild(timeInput);
+  const actions = document.createElement("div");
+  actions.className = "step-actions";
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
@@ -423,9 +453,7 @@ function addLogStepRow(step = {}) {
       addLogStepRow();
     }
   });
-  header.appendChild(removeBtn);
-
-  row.appendChild(header);
+  actions.appendChild(removeBtn);
 
   const noteArea = document.createElement("textarea");
   noteArea.className = "step-note auto-resize";
@@ -434,15 +462,9 @@ function addLogStepRow(step = {}) {
   noteArea.required = true;
   noteArea.value = step.note || "";
   setupAutoResize(noteArea);
-  row.appendChild(noteArea);
 
-  const codeArea = document.createElement("textarea");
-  codeArea.className = "step-code auto-resize";
-  codeArea.rows = 1;
-  codeArea.placeholder = "Code notes or URLs";
-  codeArea.value = step.code || "";
-  setupAutoResize(codeArea);
-  row.appendChild(codeArea);
+  row.appendChild(actions);
+  row.appendChild(noteArea);
 
   container.appendChild(row);
   return row;
@@ -470,10 +492,9 @@ function openLogForm(log = null) {
   document.getElementById("logTitle").value = log?.title || "";
   document.getElementById("logDate").value = log?.date || date;
   document.getElementById("logDescription").value = log?.description || "";
-  document.getElementById("logParameters").value = log?.parameters || "";
-  document.getElementById("logResources").value = log?.resources || "";
   document.getElementById("logResults").value = log?.results || "";
-  resetLogSteps(log?.steps || [{ time: now.time }]);
+  const defaultSteps = log?.steps?.length ? log.steps : [{}];
+  resetLogSteps(defaultSteps);
   refreshAutosizeWithin(form);
   document.getElementById("logTitle").focus();
 }
@@ -500,13 +521,10 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove("show"), 2200);
 }
 
-function getLogStartTime(log) {
-  if (!log.steps || !log.steps.length) return "99:99";
-  const times = log.steps
-    .map((step) => step.time)
-    .filter(Boolean)
-    .sort();
-  return times[0] || "99:99";
+function getLogSortKey(log) {
+  if (log.createdAt) return log.createdAt;
+  if (log.updatedAt) return log.updatedAt;
+  return `${log.date || "0000-00-00"}T00:00:00.000Z`;
 }
 
 function upsertJournal(entry) {
@@ -550,7 +568,7 @@ function upsertLog(log) {
   }
   state.labLogs.sort((a, b) => {
     if (a.date === b.date) {
-      return getLogStartTime(a).localeCompare(getLogStartTime(b)) || a.title.localeCompare(b.title);
+      return getLogSortKey(a).localeCompare(getLogSortKey(b)) || a.title.localeCompare(b.title);
     }
     return a.date.localeCompare(b.date);
   });
@@ -745,7 +763,7 @@ function renderLogs() {
 
   logs
     .slice()
-    .sort((a, b) => getLogStartTime(a).localeCompare(getLogStartTime(b)) || a.title.localeCompare(b.title))
+    .sort((a, b) => getLogSortKey(a).localeCompare(getLogSortKey(b)) || a.title.localeCompare(b.title))
     .forEach((log) => {
       const node = template.content.firstElementChild.cloneNode(true);
       node.dataset.id = log.id;
@@ -772,50 +790,25 @@ function renderLogs() {
       const operationsEl = node.querySelector(".log-operations");
       operationsEl.innerHTML = "";
       if (log.steps?.length) {
-        log.steps
-          .slice()
-          .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"))
-          .forEach((step) => {
-            const item = document.createElement("li");
-            const timeSpan = document.createElement("span");
-            timeSpan.className = "operation-time";
-            timeSpan.textContent = step.time || "--:--";
-            item.appendChild(timeSpan);
-            const noteSpan = document.createElement("span");
-            noteSpan.textContent = ` ${step.note}`;
-            item.appendChild(noteSpan);
-            if (step.code) {
-              const codeSpan = document.createElement("span");
-              codeSpan.className = "operation-commit";
-              codeSpan.textContent = step.code;
-              item.appendChild(codeSpan);
-            }
-            operationsEl.appendChild(item);
-          });
+        log.steps.forEach((step) => {
+          const item = document.createElement("li");
+          item.textContent = step.note;
+          operationsEl.appendChild(item);
+        });
       } else {
         operationsEl.remove();
       }
 
-      const notesEl = node.querySelector(".log-notes");
-      notesEl.innerHTML = "";
-      const noteGroups = [
-        { label: "Parameters", value: log.parameters },
-        { label: "Code / Links", value: log.resources },
-        { label: "Results", value: log.results },
-      ];
-      noteGroups.forEach(({ label, value }) => {
-        if (!value) return;
-        const wrapper = document.createElement("div");
-        const strong = document.createElement("strong");
-        strong.textContent = label;
+      const resultsEl = node.querySelector(".log-results");
+      if (log.results) {
+        resultsEl.innerHTML = "";
+        const label = document.createElement("strong");
+        label.textContent = "Results";
         const body = document.createElement("div");
-        body.textContent = value;
-        wrapper.appendChild(strong);
-        wrapper.appendChild(body);
-        notesEl.appendChild(wrapper);
-      });
-      if (!notesEl.children.length) {
-        notesEl.remove();
+        body.textContent = log.results;
+        resultsEl.append(label, body);
+      } else {
+        resultsEl.remove();
       }
 
       fragment.appendChild(node);
@@ -1045,7 +1038,7 @@ function setupEventHandlers() {
   if (addStepBtn) {
     addStepBtn.addEventListener("click", () => {
       const row = addLogStepRow();
-      row?.querySelector(".step-time")?.focus();
+      row?.querySelector(".step-note")?.focus();
     });
   }
   document.getElementById("logForm").addEventListener("keydown", (event) => {
@@ -1195,14 +1188,10 @@ function collectLogSteps() {
   const container = document.getElementById("logStepsContainer");
   if (!container) return [];
   return Array.from(container.querySelectorAll(".log-step-row")).map((row) => {
-    const time = row.querySelector(".step-time")?.value || "";
     const note = row.querySelector(".step-note")?.value.trim() || "";
-    const code = row.querySelector(".step-code")?.value.trim() || "";
     return {
       id: row.dataset.stepId || crypto.randomUUID(),
-      time,
       note,
-      code,
     };
   });
 }
@@ -1222,25 +1211,30 @@ function handleLogSubmit(event) {
     return;
   }
   const stepsRaw = collectLogSteps();
-  const steps = stepsRaw.filter((step) => step.time || step.note || step.code);
+  const steps = stepsRaw.filter((step) => step.note);
   if (!steps.length) {
     showToast("Add at least one step");
     return;
   }
-  if (steps.some((step) => !step.time || !step.note)) {
-    showToast("Each step needs a time and detail");
+  if (steps.some((step) => !step.note)) {
+    showToast("Each step needs details");
     return;
   }
 
+  const existing = state.editingLogId
+    ? state.labLogs.find((item) => item.id === state.editingLogId)
+    : null;
+  const resultsValue = document.getElementById("logResults").value.trim();
+
   const log = {
     id: state.editingLogId || crypto.randomUUID(),
+    createdAt: existing?.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     title,
     date,
     description: document.getElementById("logDescription").value.trim(),
-    parameters: document.getElementById("logParameters").value.trim(),
-    resources: document.getElementById("logResources").value.trim(),
-    results: document.getElementById("logResults").value.trim(),
     steps,
+    ...(resultsValue ? { results: resultsValue } : {}),
   };
 
   upsertLog(log);
@@ -1330,7 +1324,7 @@ function exportLogsTxt() {
     .slice()
     .sort((a, b) => {
       if (a.date === b.date) {
-        return getLogStartTime(a).localeCompare(getLogStartTime(b)) || a.title.localeCompare(b.title);
+        return getLogSortKey(a).localeCompare(getLogSortKey(b)) || a.title.localeCompare(b.title);
       }
       return a.date.localeCompare(b.date);
     });
@@ -1342,21 +1336,12 @@ function exportLogsTxt() {
   const blocks = logs.map((log) => {
     const lines = [`${log.date} — ${log.title}`];
     if (log.description) lines.push(`Description: ${log.description}`);
-    if (log.parameters) lines.push(`Parameters: ${log.parameters}`);
-    if (log.resources) lines.push(`Code / Links: ${log.resources}`);
+    if (log.results) lines.push(`Results: ${log.results}`);
     if (log.steps?.length) {
       lines.push("Operations:");
-      const stepLines = log.steps
-        .slice()
-        .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"))
-        .map((step) => {
-          const code = step.code ? `\n    Code/URL: ${step.code}` : "";
-          return `  - ${step.time || "--:--"} ${step.note}${code}`;
-        })
-        .join("\n");
+      const stepLines = log.steps.map((step) => `  - ${step.note}`).join("\n");
       lines.push(stepLines);
     }
-    if (log.results) lines.push(`Results: ${log.results}`);
     return lines.join("\n");
   });
 

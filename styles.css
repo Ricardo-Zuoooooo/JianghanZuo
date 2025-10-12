@@ -201,6 +201,7 @@ select:focus-visible {
 
 .calendar-panel,
 .day-panel,
+.log-board,
 .export-panel {
   background: var(--surface);
   border-radius: 20px;
@@ -280,6 +281,18 @@ select:focus-visible {
 
 .day-panel {
   gap: 1.25rem;
+}
+
+.log-board {
+  gap: 1.25rem;
+  margin: 0 1.5rem 1.5rem;
+}
+
+.log-board-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  flex: 1;
 }
 
 
@@ -468,10 +481,17 @@ textarea.auto-resize {
 }
 
 .log-description,
-.log-notes {
+.log-results {
   font-size: 0.9rem;
   color: var(--text);
   white-space: pre-wrap;
+}
+
+.log-results strong {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
 }
 
 .log-operations {
@@ -492,17 +512,6 @@ textarea.auto-resize {
   white-space: pre-wrap;
 }
 
-.log-operations .operation-time {
-  font-weight: 600;
-  color: var(--primary);
-}
-
-.log-operations .operation-commit {
-  display: block;
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
-  color: var(--muted);
-}
 
 .log-steps {
   display: flex;
@@ -530,28 +539,16 @@ textarea.auto-resize {
   padding: 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-.log-step-row .step-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.log-step-row input[type="time"],
-.log-step-row input[type="text"] {
-  width: 100%;
-  padding: 0.6rem;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: inherit;
+  gap: 0.75rem;
 }
 
 .log-step-row textarea {
   min-height: 2.5rem;
+}
+
+.step-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .remove-step {
@@ -567,11 +564,6 @@ textarea.auto-resize {
 .remove-step:focus-visible {
   color: var(--primary);
   background: rgba(60, 113, 245, 0.15);
-}
-
-.log-notes strong {
-  display: block;
-  margin-bottom: 0.25rem;
 }
 
 .item-main {
@@ -836,6 +828,11 @@ textarea.auto-resize {
   .header-right {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .log-board,
+  .export-panel {
+    margin: 0 1rem 1rem;
   }
 
   .journal-item {
