@@ -555,12 +555,21 @@ textarea.auto-resize {
   color: var(--muted);
 }
 
+.log-step-extra-label {
+  font-weight: 600;
+  margin-right: 0.35rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 0.7rem;
+}
+
 .log-step-extra-text {
   display: inline;
   word-break: break-word;
 }
 
-.log-step-extra-code {
+.log-step-extra-code .log-step-extra-text {
   color: var(--primary);
 }
 
