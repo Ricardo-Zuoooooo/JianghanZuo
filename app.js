@@ -36,15 +36,16 @@ function normalizeLog(log) {
     log?.createdAt ||
     log?.created_at ||
     log?.updatedAt ||
-    (log?.steps || []).find((step) => step.time)?.time;
-  const safeDate = log?.date || new Date().toISOString().slice(0, 10);
-  const baseTime = typeof createdSource === "string" && createdSource.includes("T")
-    ? createdSource
-    : typeof createdSource === "string"
-    ? `${safeDate}T${createdSource.slice(0, 5)}:00.000Z`
-    : `${safeDate}T00:00:00.000Z`;
-  nextLog.createdAt = log?.createdAt || baseTime;
-  nextLog.updatedAt = log?.updatedAt || nextLog.createdAt;
+    (log?.steps || []).find((step) => step.time)?.time ||
+    (log?.date ? `${log.date}T00:00:00.000Z` : null);
+  const inferredCreated = normalizeStepCreatedAt(
+    createdSource,
+    log?.date || null,
+    typeof createdSource === "string" && createdSource.includes("T") ? createdSource : null
+  );
+  nextLog.createdAt = inferredCreated || new Date().toISOString();
+  const normalizedUpdated = normalizeStepCreatedAt(log?.updatedAt, null, nextLog.createdAt);
+  nextLog.updatedAt = normalizedUpdated || nextLog.createdAt;
 
   const mergedResults = [];
   if (log?.results) mergedResults.push(log.results);
@@ -56,6 +57,9 @@ function normalizeLog(log) {
   }
   delete nextLog.parameters;
   delete nextLog.resources;
+  delete nextLog.date;
+
+  const baseDate = nextLog.createdAt?.slice(0, 10) || log?.date || new Date().toISOString().slice(0, 10);
 
   nextLog.steps = (log?.steps || [])
     .map((step) => {
@@ -92,8 +96,8 @@ function normalizeLog(log) {
 
       const createdAt = normalizeStepCreatedAt(
         step?.createdAt || step?.timestamp || step?.timeStamp || step?.time || step?.addedAt,
-        safeDate,
-        nextLog.createdAt
+        baseDate,
+        step?.createdAt || nextLog.createdAt
       );
 
       const normalized = { id, note, createdAt };
@@ -432,8 +436,6 @@ function setSelectedDate(date) {
   state.calendarAnchor = date;
   document.getElementById("selectedDateLabel").textContent = formatter.label(date);
   document.getElementById("journalDate").value = date;
-  const logDateInput = document.getElementById("logDate");
-  if (logDateInput) logDateInput.value = date;
   closeTodoForm();
   closeJournalForm();
   closeLogForm();
@@ -526,10 +528,12 @@ function addLogStepRow(step = {}) {
   const row = document.createElement("div");
   row.className = "log-step-row";
   row.dataset.stepId = step.id || crypto.randomUUID();
+  const fallbackIso = step?.createdAt || step?.timestamp || step?.timeStamp || step?.time || step?.addedAt || null;
+  const baseDate = typeof fallbackIso === "string" && fallbackIso.includes("T") ? fallbackIso.slice(0, 10) : null;
   const createdAt = normalizeStepCreatedAt(
-    step?.createdAt || step?.timestamp || step?.timeStamp || step?.time || step?.addedAt,
-    state.selectedDate,
-    null
+    fallbackIso,
+    baseDate,
+    typeof fallbackIso === "string" && fallbackIso.includes("T") ? fallbackIso : null
   );
   row.dataset.stepCreated = createdAt;
 
@@ -593,11 +597,8 @@ function openLogForm(log = null) {
   const form = document.getElementById("logForm");
   if (!form) return;
   form.hidden = false;
-  const now = nowInTimeZone();
-  const date = state.selectedDate || now.date;
   state.editingLogId = log ? log.id : null;
   document.getElementById("logTitle").value = log?.title || "";
-  document.getElementById("logDate").value = log?.date || date;
   document.getElementById("logDescription").value = log?.description || "";
   document.getElementById("logResults").value = log?.results || "";
   const defaultSteps = log?.steps?.length ? log.steps : [{}];
@@ -615,11 +616,6 @@ function closeLogForm() {
   resetLogSteps([]);
   refreshAutosizeWithin(form);
   refreshVisibleStepTimestamps(form);
-  const now = nowInTimeZone();
-  const logDate = document.getElementById("logDate");
-  if (logDate) {
-    logDate.value = state.selectedDate || now.date;
-  }
   form.hidden = true;
 }
 
@@ -631,9 +627,20 @@ function showToast(message) {
 }
 
 function getLogSortKey(log) {
-  if (log.createdAt) return log.createdAt;
-  if (log.updatedAt) return log.updatedAt;
-  return `${log.date || "0000-00-00"}T00:00:00.000Z`;
+  if (log?.createdAt) return log.createdAt;
+  if (log?.updatedAt) return log.updatedAt;
+  return "0000-00-00T00:00:00.000Z";
+}
+
+function getLogRangeDate(log) {
+  if (log?.createdAt && typeof log.createdAt === "string") {
+    return log.createdAt.slice(0, 10);
+  }
+  if (log?.updatedAt && typeof log.updatedAt === "string") {
+    return log.updatedAt.slice(0, 10);
+  }
+  if (log?.date) return log.date;
+  return "";
 }
 
 function upsertJournal(entry) {
@@ -675,12 +682,7 @@ function upsertLog(log) {
   } else {
     state.labLogs.push(log);
   }
-  state.labLogs.sort((a, b) => {
-    if (a.date === b.date) {
-      return getLogSortKey(a).localeCompare(getLogSortKey(b)) || a.title.localeCompare(b.title);
-    }
-    return a.date.localeCompare(b.date);
-  });
+  state.labLogs.sort((a, b) => getLogSortKey(b).localeCompare(getLogSortKey(a)) || a.title.localeCompare(b.title));
   persist(STORAGE_KEYS.logs, state.labLogs);
 }
 
@@ -872,7 +874,7 @@ function renderLogs() {
 
   logs
     .slice()
-    .sort((a, b) => getLogSortKey(a).localeCompare(getLogSortKey(b)) || a.title.localeCompare(b.title))
+    .sort((a, b) => getLogSortKey(b).localeCompare(getLogSortKey(a)) || a.title.localeCompare(b.title))
     .forEach((log) => {
       const node = template.content.firstElementChild.cloneNode(true);
       node.dataset.id = log.id;
@@ -882,9 +884,6 @@ function renderLogs() {
 
       const metaEl = node.querySelector(".log-meta");
       metaEl.innerHTML = "";
-      const dateSpan = document.createElement("span");
-      dateSpan.textContent = log.date;
-      metaEl.appendChild(dateSpan);
       const stepsSpan = document.createElement("span");
       stepsSpan.textContent = `${log.steps?.length || 0} step${log.steps?.length === 1 ? "" : "s"}`;
       metaEl.appendChild(stepsSpan);
@@ -1089,8 +1088,7 @@ function renderCalendar() {
 
     const hasContent =
       state.todos.some((t) => t.date === date) ||
-      state.journal.some((j) => j.date === date) ||
-      state.labLogs.some((log) => log.date === date);
+      state.journal.some((j) => j.date === date);
     if (hasContent) {
       const star = document.createElement("span");
       star.className = "day-star";
@@ -1318,11 +1316,9 @@ function collectLogSteps() {
   return Array.from(container.querySelectorAll(".log-step-row")).map((row) => {
     const note = row.querySelector(".step-note")?.value.trim() || "";
     const code = row.querySelector(".step-code")?.value.trim() || "";
-    const createdAt = normalizeStepCreatedAt(
-      row.dataset.stepCreated,
-      state.selectedDate,
-      row.dataset.stepCreated
-    );
+    const datasetValue = row.dataset.stepCreated;
+    const baseDate = typeof datasetValue === "string" && datasetValue.includes("T") ? datasetValue.slice(0, 10) : null;
+    const createdAt = normalizeStepCreatedAt(datasetValue, baseDate, datasetValue);
     row.dataset.stepCreated = createdAt;
     refreshStepRowTimestamp(row);
     return {
@@ -1337,15 +1333,9 @@ function collectLogSteps() {
 function handleLogSubmit(event) {
   event.preventDefault();
   const title = document.getElementById("logTitle").value.trim();
-  const date = document.getElementById("logDate").value;
   if (!title) {
     showToast("Title cannot be empty");
     document.getElementById("logTitle").focus();
-    return;
-  }
-  if (!date) {
-    showToast("Date is required");
-    document.getElementById("logDate").focus();
     return;
   }
   const stepsRaw = collectLogSteps();
@@ -1363,26 +1353,22 @@ function handleLogSubmit(event) {
     ? state.labLogs.find((item) => item.id === state.editingLogId)
     : null;
   const resultsValue = document.getElementById("logResults").value.trim();
+  const descriptionValue = document.getElementById("logDescription").value.trim();
 
   const log = {
     id: state.editingLogId || crypto.randomUUID(),
     createdAt: existing?.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     title,
-    date,
-    description: document.getElementById("logDescription").value.trim(),
+    ...(descriptionValue ? { description: descriptionValue } : {}),
     steps,
     ...(resultsValue ? { results: resultsValue } : {}),
   };
 
   upsertLog(log);
   state.editingLogId = null;
-  if (state.selectedDate !== date) {
-    setSelectedDate(date);
-  } else {
-    renderLogs();
-    renderCalendar();
-  }
+  renderLogs();
+  renderCalendar();
   closeLogForm();
   showToast("Research log saved");
 }
@@ -1458,21 +1444,21 @@ function exportLogsTxt() {
   if (!range) return;
   const { from, to } = range;
   const logs = state.labLogs
-    .filter((log) => log.date >= from && log.date <= to)
+    .filter((log) => {
+      const rangeDate = getLogRangeDate(log);
+      return rangeDate && rangeDate >= from && rangeDate <= to;
+    })
     .slice()
-    .sort((a, b) => {
-      if (a.date === b.date) {
-        return getLogSortKey(a).localeCompare(getLogSortKey(b)) || a.title.localeCompare(b.title);
-      }
-      return a.date.localeCompare(b.date);
-    });
+    .sort((a, b) => getLogSortKey(b).localeCompare(getLogSortKey(a)) || a.title.localeCompare(b.title));
   if (!logs.length) {
     showToast("No research logs in the selected range");
     return;
   }
 
   const blocks = logs.map((log) => {
-    const lines = [`${log.date} — ${log.title}`];
+    const headerStamp = formatStepTimestamp(log.createdAt) || getLogRangeDate(log);
+    const titleLine = headerStamp ? `${log.title} — ${headerStamp}` : log.title;
+    const lines = [titleLine];
     if (log.description) lines.push(`Description: ${log.description}`);
     if (log.results) lines.push(`Results: ${log.results}`);
     if (log.steps?.length) {
@@ -1570,10 +1556,6 @@ function initialize() {
   const now = nowInTimeZone();
   document.getElementById("journalDate").value = state.selectedDate || now.date;
   document.getElementById("journalTime").value = now.time;
-  const logDateInput = document.getElementById("logDate");
-  if (logDateInput) {
-    logDateInput.value = state.selectedDate || now.date;
-  }
   resetLogSteps([{ createdAt: new Date().toISOString() }]);
   refreshAutosizeWithin(document);
   document.getElementById("selectedDateLabel").textContent = formatter.label(state.selectedDate);

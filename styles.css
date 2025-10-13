@@ -413,8 +413,6 @@ textarea.auto-resize {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-height: 22rem;
-  overflow: auto;
 }
 
 .todo-item,
@@ -450,8 +448,6 @@ textarea.auto-resize {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-height: 22rem;
-  overflow: auto;
 }
 
 .log-item {

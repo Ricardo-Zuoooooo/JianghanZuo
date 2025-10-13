@@ -17,7 +17,7 @@ The `index.html`, `styles.css`, and `app.js` files in the repository root make u
      ```
      Then visit http://localhost:8000/index.html.
 3. The app starts in the Europe/London timezone and persists data to `localStorage` using the keys `dm_journal`, `dm_todos`, `dm_labLogs`, and `dm_settings`. Click the timezone label below the title to switch between Europe/London and China. Refreshing the page keeps your data intact.
-4. Track daily todos, personal activities, and research/experiment logs from the right-hand panel. Research logs let you capture an experiment title, overview, parameters, code/links, detailed time-stamped steps, and results for a chosen day.
+4. Track daily todos, personal activities, and research/experiment logs from the right-hand panel. Research logs capture an experiment title, overview, code notes or URLs, detailed auto time-stamped steps, and optional results independent of the calendar view.
 5. To archive or migrate your information, pick a date range in the export card at the bottom of the page and download TXT files for activities, todos, or research logs.
 
 > If you only need the Jekyll site, continue with the existing “Running locally” section below.
