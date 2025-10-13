@@ -8,6 +8,7 @@
   --primary: #3c71f5;
   --primary-contrast: #ffffff;
   --code-accent: #005cc5;
+  --code-accent-bg: rgba(0, 92, 197, 0.12);
   --accent: #ffa726;
   --border: rgba(41, 51, 73, 0.1);
   --border-light: rgba(41, 51, 73, 0.12);
@@ -24,6 +25,7 @@ body[data-theme="dark"] {
   --muted: #9aa4ba;
   --primary: #7c9bff;
   --code-accent: #7fb6ff;
+  --code-accent-bg: rgba(127, 182, 255, 0.18);
   --border: rgba(255, 255, 255, 0.08);
   --border-light: rgba(255, 255, 255, 0.18);
   --shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
@@ -546,10 +548,14 @@ textarea.auto-resize {
 .log-step-extra {
   font-size: 0.82rem;
   color: var(--primary);
+  border-radius: 10px;
+  padding: 0.4rem 0.6rem;
+  background: rgba(60, 113, 245, 0.06);
 }
 
 .log-step-extra-code {
   color: var(--code-accent);
+  background: var(--code-accent-bg);
 }
 
 .log-step-extra-text {
