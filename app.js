@@ -287,22 +287,6 @@ function makeFieldReorderable(wrapper) {
   wrapper.addEventListener("dragend", () => {
     wrapper.classList.remove("dragging");
   });
-  const handle = wrapper.querySelector(".step-drag-handle");
-  if (handle) {
-    handle.setAttribute("draggable", "true");
-    handle.addEventListener("dragstart", (event) => {
-      wrapper.classList.add("dragging");
-      event.dataTransfer.effectAllowed = "move";
-      try {
-        event.dataTransfer.setData("text/plain", "");
-      } catch (error) {
-        /* no-op */
-      }
-    });
-    handle.addEventListener("dragend", () => {
-      wrapper.classList.remove("dragging");
-    });
-  }
 }
 
 function getTimeZone() {
@@ -724,17 +708,6 @@ function addLogStepRow(step = {}) {
   fields.className = "step-fields";
   setupStepFieldReorder(fields);
 
-  const createDragHandle = () => {
-    const handle = document.createElement("button");
-    handle.type = "button";
-    handle.className = "step-drag-handle";
-    handle.setAttribute("aria-hidden", "true");
-    handle.tabIndex = -1;
-    handle.title = "Drag to reorder";
-    handle.innerHTML = "↕";
-    return handle;
-  };
-
   const createCommitField = (value = "", { primary = false } = {}) => {
     const wrapper = document.createElement("div");
     wrapper.className = `step-field${primary ? " primary" : ""}`;
@@ -743,10 +716,6 @@ function addLogStepRow(step = {}) {
     textarea.rows = 1;
     textarea.placeholder = primary ? "Commit or change" : "Additional commit";
     textarea.value = value || "";
-    if (!primary) {
-      const handle = createDragHandle();
-      wrapper.appendChild(handle);
-    }
     wrapper.appendChild(textarea);
     if (primary) {
       textarea.required = true;
@@ -776,8 +745,6 @@ function addLogStepRow(step = {}) {
     textarea.rows = 1;
     textarea.placeholder = "Code notes or URLs";
     textarea.value = value || "";
-    const handle = createDragHandle();
-    wrapper.appendChild(handle);
     wrapper.appendChild(textarea);
     const removeExtra = document.createElement("button");
     removeExtra.type = "button";
