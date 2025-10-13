@@ -541,29 +541,30 @@ textarea.auto-resize {
 }
 
 .log-step-extra {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  align-items: baseline;
+  position: relative;
+  padding-left: 1rem;
   font-size: 0.82rem;
+  color: var(--text);
 }
 
-.log-step-extra-label {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.log-step-extra::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  top: 0;
   color: var(--muted);
-  background: rgba(60, 113, 245, 0.12);
-  border-radius: 999px;
-  padding: 0.1rem 0.5rem;
 }
 
 .log-step-extra-text {
-  color: var(--text);
+  display: inline;
   word-break: break-word;
 }
 
-.log-step-extra-code .log-step-extra-text {
+.log-step-extra-code {
+  color: var(--primary);
+}
+
+.log-step-extra-code::before {
   color: var(--primary);
 }
 
