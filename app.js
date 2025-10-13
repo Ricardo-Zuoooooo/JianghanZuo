@@ -1250,13 +1250,10 @@ function renderLogs() {
             extras.forEach((entry) => {
               const extraItem = document.createElement("li");
               extraItem.className = `log-step-extra log-step-extra-${entry.type}`;
-              const labelSpan = document.createElement("span");
-              labelSpan.className = "log-step-extra-label";
-              labelSpan.textContent = entry.type === "code" ? "Code or URLs" : "Commit";
               const valueSpan = document.createElement("span");
               valueSpan.className = "log-step-extra-text";
               valueSpan.textContent = entry.value;
-              extraItem.append(labelSpan, valueSpan);
+              extraItem.appendChild(valueSpan);
               extrasList.appendChild(extraItem);
             });
             item.appendChild(extrasList);
@@ -1853,8 +1850,7 @@ function exportLogsTxt() {
               ];
             })();
         extras.forEach((entry) => {
-          const label = entry.type === "code" ? "Code or URLs" : "Commit";
-          lines.push(`      • ${label}: ${entry.value}`);
+          lines.push(`      ${entry.value}`);
         });
       });
     }

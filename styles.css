@@ -538,43 +538,17 @@ textarea.auto-resize {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  list-style: none;
 }
 
 .log-step-extra {
-  position: relative;
-  padding-left: 1rem;
   font-size: 0.82rem;
-  color: var(--text);
-}
-
-.log-step-extra::before {
-  content: "•";
-  position: absolute;
-  left: 0;
-  top: 0;
-  color: var(--muted);
-}
-
-.log-step-extra-label {
-  font-weight: 600;
-  margin-right: 0.35rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  font-size: 0.7rem;
+  color: var(--primary);
 }
 
 .log-step-extra-text {
   display: inline;
   word-break: break-word;
-}
-
-.log-step-extra-code .log-step-extra-text {
-  color: var(--primary);
-}
-
-.log-step-extra-code::before {
-  color: var(--primary);
 }
 
 
