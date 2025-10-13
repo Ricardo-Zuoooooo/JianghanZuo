@@ -7,6 +7,7 @@
   --muted: #5f6b7b;
   --primary: #3c71f5;
   --primary-contrast: #ffffff;
+  --code-accent: #005cc5;
   --accent: #ffa726;
   --border: rgba(41, 51, 73, 0.1);
   --border-light: rgba(41, 51, 73, 0.12);
@@ -22,6 +23,7 @@ body[data-theme="dark"] {
   --text: #e7ebf6;
   --muted: #9aa4ba;
   --primary: #7c9bff;
+  --code-accent: #7fb6ff;
   --border: rgba(255, 255, 255, 0.08);
   --border-light: rgba(255, 255, 255, 0.18);
   --shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
@@ -546,9 +548,25 @@ textarea.auto-resize {
   color: var(--primary);
 }
 
+.log-step-extra-code {
+  color: var(--code-accent);
+}
+
 .log-step-extra-text {
   display: inline;
   word-break: break-word;
+}
+
+.step-field[data-extra-type="code"] textarea {
+  color: var(--code-accent);
+}
+
+.step-field[data-extra-type="code"] textarea::placeholder {
+  color: rgba(0, 92, 197, 0.55);
+}
+
+body[data-theme="dark"] .step-field[data-extra-type="code"] textarea::placeholder {
+  color: rgba(127, 182, 255, 0.7);
 }
 
 
