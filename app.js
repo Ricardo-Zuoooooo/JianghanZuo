@@ -492,10 +492,13 @@ function setTimeZone(value) {
   state.settings.timeZone = value;
   updateTimezoneDisplay();
   document.getElementById("selectedDateLabel").textContent = formatter.label(state.selectedDate);
-  if (document.getElementById("journalForm").hidden) {
+  const journalForm = document.getElementById("journalForm");
+  if (journalForm && journalForm.hidden) {
     const now = nowInTimeZone();
-    document.getElementById("journalDate").value = state.selectedDate || now.date;
-    document.getElementById("journalTime").value = now.time;
+    const journalDate = document.getElementById("journalDate");
+    const journalTime = document.getElementById("journalTime");
+    if (journalDate) journalDate.value = state.selectedDate || now.date;
+    if (journalTime) journalTime.value = now.time;
   }
   renderCalendar();
   renderTodos();
@@ -590,7 +593,10 @@ function setSelectedDate(date) {
   state.settings.selectedDate = date;
   state.calendarAnchor = date;
   document.getElementById("selectedDateLabel").textContent = formatter.label(date);
-  document.getElementById("journalDate").value = date;
+  const journalDate = document.getElementById("journalDate");
+  if (journalDate) {
+    journalDate.value = date;
+  }
   closeTodoForm();
   closeJournalForm();
   closeLogForm();
@@ -643,37 +649,49 @@ function closeTodoForm() {
 
 function openJournalForm(entry = null) {
   const form = document.getElementById("journalForm");
+  if (!form) return;
   form.hidden = false;
   const now = nowInTimeZone();
   const date = state.selectedDate || now.date;
   const contentField = document.getElementById("journalContent");
+  if (!contentField) return;
   if (entry) {
     state.editingJournalId = entry.id;
-    document.getElementById("journalDate").value = entry.date;
-    document.getElementById("journalTime").value = entry.time;
-    document.getElementById("journalTags").value = entry.tags?.join(", ") || "";
+    const journalDate = document.getElementById("journalDate");
+    const journalTime = document.getElementById("journalTime");
+    const journalTags = document.getElementById("journalTags");
+    if (journalDate) journalDate.value = entry.date;
+    if (journalTime) journalTime.value = entry.time;
+    if (journalTags) journalTags.value = entry.tags?.join(", ") || "";
     contentField.value = entry.content;
   } else {
     state.editingJournalId = null;
-    document.getElementById("journalForm").reset();
-    document.getElementById("journalDate").value = date;
-    document.getElementById("journalTime").value = now.time;
+    form.reset();
+    const journalDate = document.getElementById("journalDate");
+    const journalTime = document.getElementById("journalTime");
+    if (journalDate) journalDate.value = date;
+    if (journalTime) journalTime.value = now.time;
     contentField.value = "";
   }
   setupAutoResize(contentField);
-  document.getElementById("journalContent").focus();
+  contentField.focus();
 }
 
 function closeJournalForm() {
   const form = document.getElementById("journalForm");
+  if (!form) return;
   form.reset();
   const now = nowInTimeZone();
-  document.getElementById("journalDate").value = state.selectedDate || now.date;
-  document.getElementById("journalTime").value = now.time;
+  const journalDate = document.getElementById("journalDate");
+  const journalTime = document.getElementById("journalTime");
+  if (journalDate) journalDate.value = state.selectedDate || now.date;
+  if (journalTime) journalTime.value = now.time;
   state.editingJournalId = null;
   const contentField = document.getElementById("journalContent");
-  contentField.value = "";
-  setupAutoResize(contentField);
+  if (contentField) {
+    contentField.value = "";
+    setupAutoResize(contentField);
+  }
   form.hidden = true;
 }
 
@@ -1043,8 +1061,9 @@ function filteredJournal() {
 
 function renderTodos() {
   const list = document.getElementById("todoList");
-  list.innerHTML = "";
   const template = document.getElementById("todoItemTemplate");
+  if (!list || !template) return;
+  list.innerHTML = "";
   const todos = filteredTodos().filter((todo) => todo.date === state.selectedDate);
   const fragment = document.createDocumentFragment();
 
@@ -1079,8 +1098,9 @@ function renderTodos() {
 
 function renderJournal() {
   const list = document.getElementById("journalTimeline");
-  list.innerHTML = "";
   const template = document.getElementById("journalItemTemplate");
+  if (!list || !template) return;
+  list.innerHTML = "";
   const entries = filteredJournal().filter((entry) => entry.date === state.selectedDate);
   const fragment = document.createDocumentFragment();
 
@@ -1252,6 +1272,7 @@ function renderLogs() {
 
 function attachTodoEvents() {
   const list = document.getElementById("todoList");
+  if (!list) return;
 
   list.querySelectorAll(".todo-item").forEach((item) => {
     item.addEventListener("dragstart", handleDragStart);
@@ -1290,30 +1311,6 @@ function attachTodoEvents() {
       }
     });
   });
-
-  list.querySelectorAll(".item-actions .up").forEach((btn) => {
-    btn.addEventListener("click", () => moveTodo(btn.closest(".todo-item").dataset.id, -1));
-  });
-
-  list.querySelectorAll(".item-actions .down").forEach((btn) => {
-    btn.addEventListener("click", () => moveTodo(btn.closest(".todo-item").dataset.id, 1));
-  });
-}
-
-function moveTodo(id, delta) {
-  const todo = state.todos.find((t) => t.id === id);
-  if (!todo) return;
-  const todos = state.todos.filter((t) => t.date === todo.date).sort((a, b) => a.order - b.order);
-  const index = todos.findIndex((t) => t.id === id);
-  const swap = todos[index + delta];
-  if (!swap) return;
-  const temp = todo.order;
-  todo.order = swap.order;
-  swap.order = temp;
-  persist(STORAGE_KEYS.todos, state.todos);
-  normalizeOrders(todo.date);
-  renderTodos();
-  renderCalendar();
 }
 
 function attachJournalEvents() {
@@ -1391,9 +1388,7 @@ function renderCalendar() {
     cell.setAttribute("role", "gridcell");
     cell.innerHTML = `<span class="day-number">${String(day).padStart(2, "0")}</span>`;
 
-    const hasContent =
-      state.todos.some((t) => t.date === date) ||
-      state.journal.some((j) => j.date === date);
+    const hasContent = state.todos.some((t) => t.date === date);
     if (hasContent) {
       const star = document.createElement("span");
       star.className = "day-star";
@@ -1437,7 +1432,10 @@ function changeCalendarPeriod(offset) {
 }
 
 function setupEventHandlers() {
-  document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.addEventListener("click", toggleTheme);
+  }
   ["filterDateFrom", "filterDateTo", "filterStatus", "filterTags"].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -1448,21 +1446,29 @@ function setupEventHandlers() {
     });
   });
 
-  document.getElementById("prevPeriod").addEventListener("click", () => changeCalendarPeriod(-1));
-  document.getElementById("nextPeriod").addEventListener("click", () => changeCalendarPeriod(1));
+  const prevPeriod = document.getElementById("prevPeriod");
+  const nextPeriod = document.getElementById("nextPeriod");
+  prevPeriod?.addEventListener("click", () => changeCalendarPeriod(-1));
+  nextPeriod?.addEventListener("click", () => changeCalendarPeriod(1));
 
-  document.getElementById("todoForm").addEventListener("submit", handleTodoSubmit);
-  document.getElementById("cancelTodo").addEventListener("click", () => {
+  const todoForm = document.getElementById("todoForm");
+  const cancelTodo = document.getElementById("cancelTodo");
+  todoForm?.addEventListener("submit", handleTodoSubmit);
+  cancelTodo?.addEventListener("click", () => {
     closeTodoForm();
   });
 
-  document.getElementById("journalForm").addEventListener("submit", handleJournalSubmit);
-  document.getElementById("cancelJournal").addEventListener("click", () => {
+  const journalForm = document.getElementById("journalForm");
+  const cancelJournal = document.getElementById("cancelJournal");
+  journalForm?.addEventListener("submit", handleJournalSubmit);
+  cancelJournal?.addEventListener("click", () => {
     closeJournalForm();
   });
 
-  document.getElementById("logForm").addEventListener("submit", handleLogSubmit);
-  document.getElementById("cancelLog").addEventListener("click", () => {
+  const logForm = document.getElementById("logForm");
+  logForm?.addEventListener("submit", handleLogSubmit);
+  const cancelLog = document.getElementById("cancelLog");
+  cancelLog?.addEventListener("click", () => {
     closeLogForm();
   });
   const addStepBtn = document.getElementById("addLogStep");
@@ -1472,17 +1478,18 @@ function setupEventHandlers() {
       row?.querySelector(".step-note")?.focus();
     });
   }
-  document.getElementById("logForm").addEventListener("keydown", (event) => {
+  logForm?.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       event.preventDefault();
       closeLogForm();
     }
   });
 
-  document.getElementById("journalContent").addEventListener("keydown", (event) => {
+  const journalContent = document.getElementById("journalContent");
+  journalContent?.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      document.getElementById("journalForm").requestSubmit();
+      journalForm?.requestSubmit();
     }
     if (event.key === "Escape") {
       event.preventDefault();
@@ -1490,10 +1497,11 @@ function setupEventHandlers() {
     }
   });
 
-  document.getElementById("todoNote").addEventListener("keydown", (event) => {
+  const todoNote = document.getElementById("todoNote");
+  todoNote?.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      document.getElementById("todoForm").requestSubmit();
+      todoForm?.requestSubmit();
     }
     if (event.key === "Escape") {
       event.preventDefault();
@@ -1501,10 +1509,11 @@ function setupEventHandlers() {
     }
   });
 
-  document.getElementById("todoTitle").addEventListener("keydown", (event) => {
+  const todoTitle = document.getElementById("todoTitle");
+  todoTitle?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
-      document.getElementById("todoForm").requestSubmit();
+      todoForm?.requestSubmit();
     }
     if (event.key === "Escape") {
       event.preventDefault();
@@ -1512,13 +1521,16 @@ function setupEventHandlers() {
     }
   });
 
-  document.getElementById("newTodoBtn").addEventListener("click", () => {
+  const newTodoBtn = document.getElementById("newTodoBtn");
+  newTodoBtn?.addEventListener("click", () => {
     openTodoForm();
   });
-  document.getElementById("newJournalBtn").addEventListener("click", () => {
+  const newJournalBtn = document.getElementById("newJournalBtn");
+  newJournalBtn?.addEventListener("click", () => {
     openJournalForm();
   });
-  document.getElementById("newLogBtn").addEventListener("click", () => {
+  const newLogBtn = document.getElementById("newLogBtn");
+  newLogBtn?.addEventListener("click", () => {
     openLogForm();
   });
 
@@ -1531,8 +1543,11 @@ function setupEventHandlers() {
       openTodoForm();
     }
     if (event.key.toLowerCase() === "j") {
-      event.preventDefault();
-      openJournalForm();
+      const hasJournal = document.getElementById("journalForm");
+      if (hasJournal) {
+        event.preventDefault();
+        openJournalForm();
+      }
     }
     if (event.key.toLowerCase() === "l") {
       event.preventDefault();
@@ -1544,12 +1559,8 @@ function setupEventHandlers() {
     }
   });
 
-  const exportJournalBtn = document.getElementById("exportJournalTxt");
   const exportTodoBtn = document.getElementById("exportTodosTxtRange");
   const exportLogsBtn = document.getElementById("exportLogsTxt");
-  if (exportJournalBtn) {
-    exportJournalBtn.addEventListener("click", exportJournalTxt);
-  }
   if (exportTodoBtn) {
     exportTodoBtn.addEventListener("click", exportTodosTxtRange);
   }
@@ -1587,14 +1598,19 @@ function handleTodoSubmit(event) {
 
 function handleJournalSubmit(event) {
   event.preventDefault();
-  const date = document.getElementById("journalDate").value;
-  const time = document.getElementById("journalTime").value;
-  const content = document.getElementById("journalContent").value.trim();
+  const dateInput = document.getElementById("journalDate");
+  const timeInput = document.getElementById("journalTime");
+  const contentInput = document.getElementById("journalContent");
+  if (!dateInput || !timeInput || !contentInput) return;
+  const date = dateInput.value;
+  const time = timeInput.value;
+  const content = contentInput.value.trim();
   if (!date || !time || !content) {
     showToast("Date, time, and content are required");
     return;
   }
-  const tags = parseTags(document.getElementById("journalTags").value);
+  const tagsInput = document.getElementById("journalTags");
+  const tags = parseTags(tagsInput ? tagsInput.value : "");
   const id = state.editingJournalId || crypto.randomUUID();
   const entry = {
     id,
@@ -1903,8 +1919,10 @@ function initialize() {
   setupTimezonePicker();
   setupEventHandlers();
   const now = nowInTimeZone();
-  document.getElementById("journalDate").value = state.selectedDate || now.date;
-  document.getElementById("journalTime").value = now.time;
+  const journalDate = document.getElementById("journalDate");
+  const journalTime = document.getElementById("journalTime");
+  if (journalDate) journalDate.value = state.selectedDate || now.date;
+  if (journalTime) journalTime.value = now.time;
   resetLogSteps([{ createdAt: new Date().toISOString() }]);
   refreshAutosizeWithin(document);
   document.getElementById("selectedDateLabel").textContent = formatter.label(state.selectedDate);
@@ -1920,4 +1938,4 @@ function initialize() {
 
 window.addEventListener("DOMContentLoaded", initialize);
 
-// Self-check: data persists after refresh; TXT export preserves order; calendar selection stays in sync; filters respond immediately; keyboard shortcuts and focus work; drag/drop or button sorting saves instantly.
+// Self-check: data persists after refresh; TXT export preserves order; calendar selection stays in sync; filters respond immediately; keyboard shortcuts and focus work; drag/drop sorting saves instantly.
