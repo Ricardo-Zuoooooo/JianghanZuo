@@ -116,35 +116,72 @@ function normalizeLog(log) {
         step?.createdAt || nextLog.createdAt
       );
 
-      const commitSources = [];
-      if (Array.isArray(step?.commits)) commitSources.push(...step.commits);
-      if (Array.isArray(step?.extraCommits)) commitSources.push(...step.extraCommits);
-      if (Array.isArray(step?.additionalCommits)) commitSources.push(...step.additionalCommits);
-      if (Array.isArray(step?.notes)) commitSources.push(...step.notes);
-
-      const commits = commitSources
-        .map((entry) => (entry == null ? "" : String(entry)).trim())
-        .filter((entry) => entry);
-
-      const codeSources = [];
-      if (Array.isArray(step?.codes)) codeSources.push(...step.codes);
-      if (Array.isArray(step?.codeSnippets)) codeSources.push(...step.codeSnippets);
-      if (Array.isArray(step?.codeNotes)) codeSources.push(...step.codeNotes);
-      if (Array.isArray(step?.codeUrls)) codeSources.push(...step.codeUrls);
-      if (Array.isArray(step?.resources)) codeSources.push(...step.resources);
-      if (typeof step?.code === "string") codeSources.push(step.code);
-      if (extractedCode) codeSources.unshift(extractedCode);
-
-      const codes = codeSources
-        .map((entry) => (entry == null ? "" : String(entry)).trim())
-        .filter((entry) => entry);
-
       const normalized = { id, note, createdAt };
-      if (commits.length) normalized.commits = commits.filter((entry) => entry !== note);
-      if (initialCode && !codes.length && initialCode !== note) {
-        codes.push(initialCode);
+
+      const normalizedSequence = Array.isArray(step?.sequence)
+        ? step.sequence
+            .map((entry) => {
+              if (!entry) return null;
+              const type = entry.type === "code" ? "code" : "commit";
+              const value = (entry.value == null ? "" : String(entry.value)).trim();
+              if (!value || value === note) return null;
+              return { type, value };
+            })
+            .filter(Boolean)
+        : null;
+
+      let commits = [];
+      let codes = [];
+
+      if (normalizedSequence?.length) {
+        normalized.sequence = normalizedSequence;
+        commits = normalizedSequence
+          .filter((entry) => entry.type === "commit")
+          .map((entry) => entry.value);
+        codes = normalizedSequence
+          .filter((entry) => entry.type === "code")
+          .map((entry) => entry.value);
+      } else {
+        const commitSources = [];
+        if (Array.isArray(step?.commits)) commitSources.push(...step.commits);
+        if (Array.isArray(step?.extraCommits)) commitSources.push(...step.extraCommits);
+        if (Array.isArray(step?.additionalCommits)) commitSources.push(...step.additionalCommits);
+        if (Array.isArray(step?.notes)) commitSources.push(...step.notes);
+
+        commits = commitSources
+          .map((entry) => (entry == null ? "" : String(entry)).trim())
+          .filter((entry) => entry && entry !== note);
+
+        const codeSources = [];
+        if (Array.isArray(step?.codes)) codeSources.push(...step.codes);
+        if (Array.isArray(step?.codeSnippets)) codeSources.push(...step.codeSnippets);
+        if (Array.isArray(step?.codeNotes)) codeSources.push(...step.codeNotes);
+        if (Array.isArray(step?.codeUrls)) codeSources.push(...step.codeUrls);
+        if (Array.isArray(step?.resources)) codeSources.push(...step.resources);
+        if (typeof step?.code === "string") codeSources.push(step.code);
+        if (extractedCode) codeSources.unshift(extractedCode);
+
+        codes = codeSources
+          .map((entry) => (entry == null ? "" : String(entry)).trim())
+          .filter((entry) => entry);
+
+        if (initialCode && !codes.length && initialCode !== note) {
+          codes.push(initialCode);
+        }
       }
-      if (codes.length) normalized.codes = codes;
+
+      if (commits.length) {
+        normalized.commits = commits;
+      }
+      if (codes.length) {
+        normalized.codes = codes;
+      }
+      if (!normalized.sequence && (commits.length || codes.length)) {
+        normalized.sequence = [
+          ...commits.map((value) => ({ type: "commit", value })),
+          ...codes.map((value) => ({ type: "code", value })),
+        ];
+      }
       return normalized;
     })
     .filter(Boolean);
@@ -175,6 +212,97 @@ function refreshAutosizeWithin(root) {
   if (!root) return;
   const elements = root.matches?.("textarea.auto-resize") ? [root] : root.querySelectorAll?.("textarea.auto-resize");
   elements?.forEach((el) => setupAutoResize(el));
+}
+
+function confirmRemovalIfFilled(inputs, message) {
+  let list = [];
+  if (!inputs) {
+    list = [];
+  } else if (Array.isArray(inputs)) {
+    list = inputs;
+  } else if (typeof inputs.length === "number" && typeof inputs.item === "function") {
+    list = Array.from(inputs);
+  } else {
+    list = [inputs];
+  }
+  const hasContent = list.some((input) => {
+    if (!input) return false;
+    const value = typeof input.value === "string" ? input.value : input.textContent;
+    return Boolean(value && value.trim());
+  });
+  if (!hasContent) return true;
+  return window.confirm(message || "This will remove content. Continue?");
+}
+
+function getDragAfterElement(container, y) {
+  const items = Array.from(container.querySelectorAll(".step-field.reorderable:not(.dragging)"));
+  return items
+    .map((element) => {
+      const rect = element.getBoundingClientRect();
+      return { element, offset: y - (rect.top + rect.height / 2) };
+    })
+    .filter(({ offset }) => offset < 0)
+    .reduce(
+      (closest, current) => (current.offset > closest.offset ? current : closest),
+      { offset: Number.NEGATIVE_INFINITY, element: null }
+    ).element;
+}
+
+function setupStepFieldReorder(container) {
+  if (!container || container.dataset.reorderBound) return;
+  container.dataset.reorderBound = "true";
+  container.addEventListener("dragover", (event) => {
+    const dragging = container.querySelector(".step-field.dragging");
+    if (!dragging) return;
+    event.preventDefault();
+    const afterElement = getDragAfterElement(container, event.clientY);
+    if (!afterElement) {
+      container.appendChild(dragging);
+    } else {
+      container.insertBefore(dragging, afterElement);
+    }
+  });
+  container.addEventListener("drop", (event) => {
+    const dragging = container.querySelector(".step-field.dragging");
+    if (!dragging) return;
+    event.preventDefault();
+    dragging.classList.remove("dragging");
+  });
+}
+
+function makeFieldReorderable(wrapper) {
+  if (!wrapper || wrapper.dataset.reorderBound) return;
+  wrapper.dataset.reorderBound = "true";
+  wrapper.classList.add("reorderable");
+  wrapper.setAttribute("draggable", "true");
+  wrapper.addEventListener("dragstart", (event) => {
+    wrapper.classList.add("dragging");
+    event.dataTransfer.effectAllowed = "move";
+    try {
+      event.dataTransfer.setData("text/plain", "");
+    } catch (error) {
+      /* no-op */
+    }
+  });
+  wrapper.addEventListener("dragend", () => {
+    wrapper.classList.remove("dragging");
+  });
+  const handle = wrapper.querySelector(".step-drag-handle");
+  if (handle) {
+    handle.setAttribute("draggable", "true");
+    handle.addEventListener("dragstart", (event) => {
+      wrapper.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      try {
+        event.dataTransfer.setData("text/plain", "");
+      } catch (error) {
+        /* no-op */
+      }
+    });
+    handle.addEventListener("dragend", () => {
+      wrapper.classList.remove("dragging");
+    });
+  }
 }
 
 function getTimeZone() {
@@ -587,8 +715,25 @@ function addLogStepRow(step = {}) {
   timestamp.className = "step-timestamp";
   timestamp.textContent = formatStepTimestamp(createdAt);
   actions.appendChild(timestamp);
+
+  const actionButtons = document.createElement("div");
+  actionButtons.className = "step-action-buttons";
+  actions.appendChild(actionButtons);
+
   const fields = document.createElement("div");
   fields.className = "step-fields";
+  setupStepFieldReorder(fields);
+
+  const createDragHandle = () => {
+    const handle = document.createElement("button");
+    handle.type = "button";
+    handle.className = "step-drag-handle";
+    handle.setAttribute("aria-hidden", "true");
+    handle.tabIndex = -1;
+    handle.title = "Drag to reorder";
+    handle.innerHTML = "⋮⋮";
+    return handle;
+  };
 
   const createCommitField = (value = "", { primary = false } = {}) => {
     const wrapper = document.createElement("div");
@@ -598,10 +743,15 @@ function addLogStepRow(step = {}) {
     textarea.rows = 1;
     textarea.placeholder = primary ? "Commit or change" : "Additional commit";
     textarea.value = value || "";
+    if (!primary) {
+      const handle = createDragHandle();
+      wrapper.appendChild(handle);
+    }
     wrapper.appendChild(textarea);
     if (primary) {
       textarea.required = true;
     } else {
+      wrapper.dataset.extraType = "commit";
       const removeExtra = document.createElement("button");
       removeExtra.type = "button";
       removeExtra.className = "remove-sub-field";
@@ -609,6 +759,7 @@ function addLogStepRow(step = {}) {
       removeExtra.setAttribute("aria-label", "Remove commit");
       removeExtra.textContent = "✕";
       removeExtra.addEventListener("click", () => {
+        if (!confirmRemovalIfFilled(textarea, "Remove this commit?")) return;
         wrapper.remove();
       });
       wrapper.appendChild(removeExtra);
@@ -619,11 +770,14 @@ function addLogStepRow(step = {}) {
   const createCodeField = (value = "") => {
     const wrapper = document.createElement("div");
     wrapper.className = "step-field";
+    wrapper.dataset.extraType = "code";
     const textarea = document.createElement("textarea");
     textarea.className = "step-code auto-resize";
     textarea.rows = 1;
     textarea.placeholder = "Code notes or URLs";
     textarea.value = value || "";
+    const handle = createDragHandle();
+    wrapper.appendChild(handle);
     wrapper.appendChild(textarea);
     const removeExtra = document.createElement("button");
     removeExtra.type = "button";
@@ -632,6 +786,7 @@ function addLogStepRow(step = {}) {
     removeExtra.setAttribute("aria-label", "Remove code note or URL");
     removeExtra.textContent = "✕";
     removeExtra.addEventListener("click", () => {
+      if (!confirmRemovalIfFilled(textarea, "Remove this code note or URL?")) return;
       wrapper.remove();
     });
     wrapper.appendChild(removeExtra);
@@ -642,6 +797,9 @@ function addLogStepRow(step = {}) {
     const { wrapper, textarea } = createCommitField(value, options);
     fields.appendChild(wrapper);
     setupAutoResize(textarea);
+    if (!options.primary) {
+      makeFieldReorderable(wrapper);
+    }
     return textarea;
   };
 
@@ -649,6 +807,7 @@ function addLogStepRow(step = {}) {
     const { wrapper, textarea } = createCodeField(value);
     fields.appendChild(wrapper);
     setupAutoResize(textarea);
+    makeFieldReorderable(wrapper);
     return textarea;
   };
 
@@ -660,7 +819,7 @@ function addLogStepRow(step = {}) {
     const textarea = appendCommitField("", { primary: false });
     textarea.focus();
   });
-  actions.appendChild(addCommitBtn);
+  actionButtons.appendChild(addCommitBtn);
 
   const addCodeBtn = document.createElement("button");
   addCodeBtn.type = "button";
@@ -670,19 +829,21 @@ function addLogStepRow(step = {}) {
     const textarea = appendCodeField("");
     textarea.focus();
   });
-  actions.appendChild(addCodeBtn);
+  actionButtons.appendChild(addCodeBtn);
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
   removeBtn.className = "remove-step";
   removeBtn.textContent = "Remove";
   removeBtn.addEventListener("click", () => {
+    const textareas = row.querySelectorAll("textarea");
+    if (!confirmRemovalIfFilled(textareas, "Remove this step?")) return;
     row.remove();
     if (!container.querySelector(".log-step-row")) {
       addLogStepRow();
     }
   });
-  actions.appendChild(removeBtn);
+  actionButtons.appendChild(removeBtn);
 
   row.appendChild(actions);
   row.appendChild(fields);
@@ -690,19 +851,32 @@ function addLogStepRow(step = {}) {
   container.appendChild(row);
 
   const noteArea = appendCommitField(step.note || "", { primary: true });
-  const commitExtras = Array.isArray(step?.commits) ? step.commits : [];
-  commitExtras
-    .map((value) => (value == null ? "" : String(value)).trim())
-    .filter((value) => value)
-    .forEach((value) => appendCommitField(value, { primary: false }));
+  const extras = Array.isArray(step?.sequence) ? step.sequence : null;
+  if (extras?.length) {
+    extras.forEach((entry) => {
+      const value = entry?.value == null ? "" : String(entry.value).trim();
+      if (!value) return;
+      if (entry.type === "code") {
+        appendCodeField(value);
+      } else {
+        appendCommitField(value, { primary: false });
+      }
+    });
+  } else {
+    const commitExtras = Array.isArray(step?.commits) ? step.commits : [];
+    commitExtras
+      .map((value) => (value == null ? "" : String(value)).trim())
+      .filter((value) => value)
+      .forEach((value) => appendCommitField(value, { primary: false }));
 
-  const codeValues = [];
-  if (Array.isArray(step?.codes)) codeValues.push(...step.codes);
-  if (typeof step?.code === "string") codeValues.push(step.code);
-  codeValues
-    .map((value) => (value == null ? "" : String(value)).trim())
-    .filter((value) => value)
-    .forEach((value) => appendCodeField(value));
+    const codeValues = [];
+    if (Array.isArray(step?.codes)) codeValues.push(...step.codes);
+    if (typeof step?.code === "string") codeValues.push(step.code);
+    codeValues
+      .map((value) => (value == null ? "" : String(value)).trim())
+      .filter((value) => value)
+      .forEach((value) => appendCodeField(value));
+  }
 
   setupAutoResize(noteArea);
   refreshStepRowTimestamp(row);
@@ -1042,36 +1216,50 @@ function renderLogs() {
           detail.className = "log-step-detail";
           detail.textContent = step.note;
           item.appendChild(detail);
-          const extraCommits = Array.isArray(step?.commits)
-            ? step.commits
-                .map((entry) => (entry == null ? "" : String(entry)).trim())
-                .filter((entry) => entry)
-            : [];
-          if (extraCommits.length) {
-            const commitList = document.createElement("ul");
-            commitList.className = "log-step-commits";
-            extraCommits.forEach((entry) => {
-              const commitItem = document.createElement("li");
-              commitItem.textContent = entry;
-              commitList.appendChild(commitItem);
+          const extras = Array.isArray(step?.sequence)
+            ? step.sequence
+                .map((entry) => {
+                  if (!entry) return null;
+                  const type = entry.type === "code" ? "code" : "commit";
+                  const value = (entry.value == null ? "" : String(entry.value)).trim();
+                  if (!value) return null;
+                  return { type, value };
+                })
+                .filter(Boolean)
+            : (() => {
+                const commitEntries = Array.isArray(step?.commits)
+                  ? step.commits
+                      .map((entry) => (entry == null ? "" : String(entry)).trim())
+                      .filter((entry) => entry)
+                  : [];
+                const codeEntries = [];
+                if (Array.isArray(step?.codes)) codeEntries.push(...step.codes);
+                if (typeof step?.code === "string") codeEntries.push(step.code);
+                const filteredCodes = codeEntries
+                  .map((entry) => (entry == null ? "" : String(entry)).trim())
+                  .filter((entry) => entry);
+                return [
+                  ...commitEntries.map((value) => ({ type: "commit", value })),
+                  ...filteredCodes.map((value) => ({ type: "code", value })),
+                ];
+              })();
+
+          if (extras.length) {
+            const extrasList = document.createElement("ul");
+            extrasList.className = "log-step-extras";
+            extras.forEach((entry) => {
+              const extraItem = document.createElement("li");
+              extraItem.className = `log-step-extra log-step-extra-${entry.type}`;
+              const label = document.createElement("span");
+              label.className = "log-step-extra-label";
+              label.textContent = entry.type === "code" ? "Code/URL" : "Commit";
+              const valueSpan = document.createElement("span");
+              valueSpan.className = "log-step-extra-text";
+              valueSpan.textContent = entry.value;
+              extraItem.append(label, valueSpan);
+              extrasList.appendChild(extraItem);
             });
-            item.appendChild(commitList);
-          }
-          const codeValues = [];
-          if (Array.isArray(step?.codes)) codeValues.push(...step.codes);
-          if (typeof step?.code === "string") codeValues.push(step.code);
-          const filteredCodes = codeValues
-            .map((entry) => (entry == null ? "" : String(entry)).trim())
-            .filter((entry) => entry);
-          if (filteredCodes.length) {
-            const codeList = document.createElement("ul");
-            codeList.className = "log-step-codes";
-            filteredCodes.forEach((entry) => {
-              const codeItem = document.createElement("li");
-              codeItem.textContent = entry;
-              codeList.appendChild(codeItem);
-            });
-            item.appendChild(codeList);
+            item.appendChild(extrasList);
           }
           operationsEl.appendChild(item);
         });
@@ -1468,12 +1656,21 @@ function collectLogSteps() {
   if (!container) return [];
   return Array.from(container.querySelectorAll(".log-step-row")).map((row) => {
     const note = row.querySelector(".step-note")?.value.trim() || "";
-    const commitExtras = Array.from(row.querySelectorAll(".step-commit-extra"))
-      .map((area) => area.value.trim())
-      .filter((value) => value);
-    const codes = Array.from(row.querySelectorAll(".step-code"))
-      .map((area) => area.value.trim())
-      .filter((value) => value);
+    const extras = Array.from(row.querySelectorAll(".step-field[data-extra-type]"))
+      .map((field) => {
+        const type = field.dataset.extraType === "code" ? "code" : "commit";
+        const textarea = field.querySelector("textarea");
+        const value = textarea?.value.trim() || "";
+        if (!value) return null;
+        return { type, value };
+      })
+      .filter(Boolean);
+    const commitExtras = extras
+      .filter((entry) => entry.type === "commit")
+      .map((entry) => entry.value);
+    const codes = extras
+      .filter((entry) => entry.type === "code")
+      .map((entry) => entry.value);
     const datasetValue = row.dataset.stepCreated;
     const baseDate = typeof datasetValue === "string" && datasetValue.includes("T") ? datasetValue.slice(0, 10) : null;
     const createdAt = normalizeStepCreatedAt(datasetValue, baseDate, datasetValue);
@@ -1486,6 +1683,7 @@ function collectLogSteps() {
     };
     if (commitExtras.length) stepData.commits = commitExtras;
     if (codes.length) stepData.codes = codes;
+    if (extras.length) stepData.sequence = extras;
     return stepData;
   });
 }
@@ -1627,23 +1825,40 @@ function exportLogsTxt() {
         const stamp = step.createdAt ? formatStepTimestamp(step.createdAt) : "";
         const prefix = stamp ? `[${stamp}] ` : "";
         lines.push(`  - ${prefix}${step.note}`);
-        const extraCommits = Array.isArray(step?.commits)
-          ? step.commits
-              .map((entry) => (entry == null ? "" : String(entry)).trim())
-              .filter((entry) => entry)
-          : [];
-        extraCommits.forEach((entry) => {
-          lines.push(`      • ${entry}`);
+        const extras = Array.isArray(step?.sequence)
+          ? step.sequence
+              .map((entry) => {
+                if (!entry) return null;
+                const type = entry.type === "code" ? "code" : "commit";
+                const value = (entry.value == null ? "" : String(entry.value)).trim();
+                if (!value) return null;
+                return { type, value };
+              })
+              .filter(Boolean)
+          : (() => {
+              const commitEntries = Array.isArray(step?.commits)
+                ? step.commits
+                    .map((entry) => (entry == null ? "" : String(entry)).trim())
+                    .filter((entry) => entry)
+                : [];
+              const codeEntries = [];
+              if (Array.isArray(step?.codes)) codeEntries.push(...step.codes);
+              if (typeof step?.code === "string") codeEntries.push(step.code);
+              const filteredCodes = codeEntries
+                .map((entry) => (entry == null ? "" : String(entry)).trim())
+                .filter((entry) => entry);
+              return [
+                ...commitEntries.map((value) => ({ type: "commit", value })),
+                ...filteredCodes.map((value) => ({ type: "code", value })),
+              ];
+            })();
+        extras.forEach((entry) => {
+          if (entry.type === "code") {
+            lines.push(`      Code/URL: ${entry.value}`);
+          } else {
+            lines.push(`      • ${entry.value}`);
+          }
         });
-        const codeValues = [];
-        if (Array.isArray(step?.codes)) codeValues.push(...step.codes);
-        if (typeof step?.code === "string") codeValues.push(step.code);
-        codeValues
-          .map((entry) => (entry == null ? "" : String(entry)).trim())
-          .filter((entry) => entry)
-          .forEach((entry) => {
-            lines.push(`      Code/URL: ${entry}`);
-          });
       });
     }
     return lines.join("\n");
