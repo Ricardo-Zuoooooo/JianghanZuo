@@ -561,6 +561,11 @@ textarea.auto-resize {
 .log-step-extra-text {
   display: inline;
   word-break: break-word;
+  color: inherit;
+}
+
+.log-step-extra-code .log-step-extra-text {
+  color: var(--code-accent);
 }
 
 .step-field[data-extra-type="code"] textarea {
