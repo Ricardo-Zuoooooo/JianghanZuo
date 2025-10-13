@@ -731,7 +731,7 @@ function addLogStepRow(step = {}) {
     handle.setAttribute("aria-hidden", "true");
     handle.tabIndex = -1;
     handle.title = "Drag to reorder";
-    handle.innerHTML = "⋮⋮";
+    handle.innerHTML = "↕";
     return handle;
   };
 
