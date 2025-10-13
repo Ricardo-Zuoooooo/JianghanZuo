@@ -464,6 +464,10 @@ textarea.auto-resize {
   border-bottom: none;
 }
 
+.log-item .item-main {
+  align-items: flex-start;
+}
+
 .log-title {
   font-weight: 600;
 }
@@ -528,6 +532,26 @@ textarea.auto-resize {
   font-size: 0.88rem;
 }
 
+.log-step-commits,
+.log-step-codes {
+  margin: 0;
+  padding: 0 0 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+}
+
+.log-step-commits {
+  list-style: disc;
+}
+
+.log-step-codes {
+  list-style: square;
+  color: var(--primary);
+  word-break: break-word;
+}
+
 .log-operations .log-step-code {
   font-size: 0.78rem;
   color: var(--primary);
@@ -565,19 +589,34 @@ textarea.auto-resize {
 }
 
 .log-step-row textarea {
-  min-height: 2.5rem;
+  min-height: 1.75rem;
 }
 
 .step-actions {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .step-timestamp {
   font-size: 0.78rem;
   color: var(--muted);
+}
+
+.step-action-btn {
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+}
+
+.step-action-btn:hover,
+.step-action-btn:focus-visible {
+  background: rgba(60, 113, 245, 0.12);
 }
 
 .remove-step {
@@ -587,12 +626,55 @@ textarea.auto-resize {
   cursor: pointer;
   padding: 0.2rem 0.4rem;
   border-radius: 6px;
+  margin-left: auto;
 }
 
 .remove-step:hover,
 .remove-step:focus-visible {
   color: var(--primary);
   background: rgba(60, 113, 245, 0.15);
+}
+
+.step-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.step-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.step-field textarea {
+  width: 100%;
+}
+
+.step-field:not(.primary) textarea {
+  padding-right: 2.5rem;
+}
+
+.step-field .remove-sub-field {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 6px;
+}
+
+.step-field .remove-sub-field:hover,
+.step-field .remove-sub-field:focus-visible {
+  color: var(--danger);
+  background: rgba(229, 72, 77, 0.12);
+}
+
+.step-field.primary .remove-sub-field {
+  display: none;
 }
 
 .item-main {
