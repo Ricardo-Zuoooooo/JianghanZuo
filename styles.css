@@ -349,36 +349,31 @@ select:focus-visible {
 }
 
 .rating-select {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  color: var(--text);
+  border: none;
+  background: none;
+  color: var(--muted);
   font-family: inherit;
   font-weight: 600;
   text-align: center;
-  min-width: 2.75rem;
+  min-width: 2.5rem;
   min-height: 2.2rem;
-  padding: 0.1rem 0.6rem;
+  padding: 0.1rem 0.45rem;
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  transition: color 0.2s ease, transform 0.15s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-}
-
-.rating-select::after {
-  content: "▾";
-  display: inline-block;
-  font-size: 0.65em;
-  margin-inline-start: 0.35rem;
-  color: var(--muted);
+  border-radius: 8px;
 }
 
 .rating-select:focus-visible,
 .rating-select:hover {
-  border-color: var(--primary);
   box-shadow: var(--focus);
+}
+
+.rating-select[data-has-value="true"] {
+  color: var(--text);
 }
 
 .rating-select[data-has-value="false"] {
