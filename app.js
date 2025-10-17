@@ -13,7 +13,7 @@ const TIMEZONE_OPTIONS = [
 
 const DAY_RATING_PICKERS = [
   { field: "score", buttonId: "dayRatingScore", menuId: "dayRatingScoreMenu", label: "Score", min: 0, max: 10, allowNull: true },
-  { field: "workTime", buttonId: "dayWorkTime", menuId: "dayWorkTimeMenu", label: "Work time", min: 0, max: 10, allowNull: true },
+  { field: "workTime", buttonId: "dayWorkTime", menuId: "dayWorkTimeMenu", label: "Working time", min: 0, max: 10, allowNull: true },
   { field: "trainingTime", buttonId: "dayTrainingTime", menuId: "dayTrainingTimeMenu", label: "Training time", min: 0, max: 10, allowNull: true },
 ];
 
@@ -1683,16 +1683,47 @@ function renderCalendar() {
     cell.innerHTML = `<span class="day-number">${String(day).padStart(2, "0")}</span>`;
 
     const hasTodoContent = state.todos.some((t) => t.date === date);
-    const hasRatingContent = state.dayRatings.some((entry) => entry.date === date);
+    const ratingEntry = state.dayRatings.find((entry) => entry.date === date) || null;
+    const hasRatingContent = Boolean(ratingEntry);
+
+    let hasTimes = false;
+    let workValue = "";
+    let trainingValue = "";
+    if (ratingEntry) {
+      const workRaw = typeof ratingEntry.workTime === "string" ? ratingEntry.workTime.trim() : "";
+      const trainingRaw = typeof ratingEntry.trainingTime === "string" ? ratingEntry.trainingTime.trim() : "";
+      const hasWork = workRaw !== "";
+      const hasTraining = trainingRaw !== "";
+      if (hasWork || hasTraining) {
+        hasTimes = true;
+        workValue = hasWork ? workRaw : "0";
+        trainingValue = hasTraining ? trainingRaw : "0";
+      }
+    }
+
     const hasContent = hasTodoContent || hasRatingContent;
     if (hasContent) {
+      if (hasTimes) {
+        const timeHint = document.createElement("span");
+        timeHint.className = "day-time-hint";
+        timeHint.textContent = `${workValue}, ${trainingValue}`;
+        timeHint.setAttribute("aria-hidden", "true");
+        cell.appendChild(timeHint);
+      }
+
       const star = document.createElement("span");
       star.className = "day-star";
       star.textContent = "★";
       star.setAttribute("aria-hidden", "true");
       cell.appendChild(star);
-      cell.setAttribute("aria-label", `${date} has entries`);
-      cell.title = `${date} has entries`;
+
+      const labelParts = [`${date} has entries`];
+      if (hasTimes) {
+        labelParts.push(`work ${workValue}, training ${trainingValue}`);
+      }
+      const labelText = labelParts.join(", ");
+      cell.setAttribute("aria-label", labelText);
+      cell.title = labelText;
     } else {
       cell.setAttribute("aria-label", date);
       cell.title = date;
