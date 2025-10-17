@@ -10,6 +10,9 @@
   --code-accent: #005cc5;
   --code-accent-bg: rgba(0, 92, 197, 0.12);
   --accent: #ffa726;
+  --star-future: #f4c84a;
+  --star-recent: #ff8a3d;
+  --star-past: #ff4d4f;
   --border: rgba(41, 51, 73, 0.1);
   --border-light: rgba(41, 51, 73, 0.12);
   --shadow: 0 12px 30px rgba(41, 51, 73, 0.1);
@@ -26,6 +29,9 @@ body[data-theme="dark"] {
   --primary: #7c9bff;
   --code-accent: #7fb6ff;
   --code-accent-bg: rgba(127, 182, 255, 0.18);
+  --star-future: #ffd64d;
+  --star-recent: #ffb76a;
+  --star-past: #ff7a78;
   --border: rgba(255, 255, 255, 0.08);
   --border-light: rgba(255, 255, 255, 0.18);
   --shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
@@ -279,26 +285,38 @@ select:focus-visible {
   color: var(--text);
 }
 
-.calendar-day .day-star {
+.calendar-day .day-indicator {
   position: absolute;
   bottom: 0.5rem;
   right: 0.6rem;
-  font-size: 0.85rem;
-  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .calendar-day .day-time-hint {
-  position: absolute;
-  bottom: 0.52rem;
-  right: 2.6rem;
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--muted);
   letter-spacing: 0.01em;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.1rem;
   white-space: nowrap;
+}
+
+.calendar-day .day-star {
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.calendar-day .day-star.star-future {
+  color: var(--star-future);
+}
+
+.calendar-day .day-star.star-recent {
+  color: var(--star-recent);
+}
+
+.calendar-day .day-star.star-past {
+  color: var(--star-past);
 }
 
 .calendar-day.placeholder {

@@ -16,6 +16,8 @@ const DAY_RATING_PICKERS = [
   { field: "trainingTime", buttonId: "dayTrainingTime", menuId: "dayTrainingTimeMenu", label: "Training time", min: 0, max: 10, allowNull: true },
 ];
 
+const MS_PER_DAY = 86_400_000;
+
 const DEFAULT_SETTINGS = {
   theme: "light",
   selectedDate: null,
@@ -66,6 +68,25 @@ function normalizeDayRating(entry) {
     base.commit ?? base.note ?? base.summary ?? base.notes ?? base.commitNote ?? base.commitText ?? "";
   const commit = String(commitSource).replace(/\s+$/u, "");
   return { date: base.date, workTime, trainingTime, commit };
+}
+
+function toUtcMidnight(dateStr) {
+  if (!dateStr || typeof dateStr !== "string") return null;
+  const [yearStr, monthStr, dayStr] = dateStr.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null;
+  }
+  return Date.UTC(year, month - 1, day);
+}
+
+function getDayDifference(targetDate, baseDate) {
+  const targetUtc = toUtcMidnight(targetDate);
+  const baseUtc = toUtcMidnight(baseDate);
+  if (targetUtc == null || baseUtc == null) return null;
+  return Math.round((targetUtc - baseUtc) / MS_PER_DAY);
 }
 
 function isDayRatingEmpty(entry) {
@@ -1652,6 +1673,9 @@ function renderCalendar() {
   const labelDate = new Date(Date.UTC(year, month, 1));
   label.textContent = labelDate.toLocaleString("en-GB", { month: "long", year: "numeric" });
 
+  const todayInfo = nowInTimeZone();
+  const todayDate = todayInfo?.date || null;
+
   for (let i = 0; i < totalCells; i++) {
     if (i < firstWeekday || i >= firstWeekday + daysInMonth) {
       const placeholder = document.createElement("div");
@@ -1691,19 +1715,35 @@ function renderCalendar() {
 
     const hasContent = hasTodoContent || hasRatingContent;
     if (hasContent) {
+      const indicator = document.createElement("span");
+      indicator.className = "day-indicator";
+
       if (hasTimes) {
         const timeHint = document.createElement("span");
         timeHint.className = "day-time-hint";
         timeHint.textContent = `${workValue}, ${trainingValue}`;
         timeHint.setAttribute("aria-hidden", "true");
-        cell.appendChild(timeHint);
+        indicator.appendChild(timeHint);
       }
 
       const star = document.createElement("span");
       star.className = "day-star";
       star.textContent = "★";
       star.setAttribute("aria-hidden", "true");
-      cell.appendChild(star);
+
+      const diffFromToday = getDayDifference(date, todayDate);
+      if (diffFromToday != null) {
+        if (diffFromToday >= 0) {
+          star.classList.add("star-future");
+        } else if (diffFromToday >= -7) {
+          star.classList.add("star-recent");
+        } else {
+          star.classList.add("star-past");
+        }
+      }
+
+      indicator.appendChild(star);
+      cell.appendChild(indicator);
 
       const labelParts = [`${date} has entries`];
       if (hasTimes) {
