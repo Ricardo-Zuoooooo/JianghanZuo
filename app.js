@@ -12,7 +12,6 @@ const TIMEZONE_OPTIONS = [
 ];
 
 const DAY_RATING_PICKERS = [
-  { field: "score", buttonId: "dayRatingScore", menuId: "dayRatingScoreMenu", label: "Score", min: 0, max: 10, allowNull: true },
   { field: "workTime", buttonId: "dayWorkTime", menuId: "dayWorkTimeMenu", label: "Working time", min: 0, max: 10, allowNull: true },
   { field: "trainingTime", buttonId: "dayTrainingTime", menuId: "dayTrainingTimeMenu", label: "Training time", min: 0, max: 10, allowNull: true },
 ];
@@ -61,27 +60,20 @@ function normalizeRatingValue(value, { allowNull = false } = {}) {
 function normalizeDayRating(entry) {
   if (!entry || !entry.date) return null;
   const base = { ...entry };
-  const scoreSource =
-    base.score ?? base.rating ?? base.value ?? (typeof base.selectedScore === "number" ? base.selectedScore : null);
-  let score = null;
-  if (scoreSource !== undefined && scoreSource !== null) {
-    score = normalizeRatingValue(scoreSource, { allowNull: true });
-  }
   const workTime = normalizeRatingValue(base.workTime);
   const trainingTime = normalizeRatingValue(base.trainingTime);
   const commitSource =
     base.commit ?? base.note ?? base.summary ?? base.notes ?? base.commitNote ?? base.commitText ?? "";
   const commit = String(commitSource).replace(/\s+$/u, "");
-  return { date: base.date, score, workTime, trainingTime, commit };
+  return { date: base.date, workTime, trainingTime, commit };
 }
 
 function isDayRatingEmpty(entry) {
   if (!entry) return true;
-  const hasScore = typeof entry.score === "number" && Number.isFinite(entry.score);
   const hasWork = typeof entry.workTime === "string" && entry.workTime.trim() !== "";
   const hasTraining = typeof entry.trainingTime === "string" && entry.trainingTime.trim() !== "";
   const hasCommit = typeof entry.commit === "string" && entry.commit.trim() !== "";
-  return !hasScore && !hasWork && !hasTraining && !hasCommit;
+  return !hasWork && !hasTraining && !hasCommit;
 }
 
 function normalizeLog(log) {
@@ -279,7 +271,6 @@ function setDayRating(date, updates = {}) {
   const prev = state.dayRatings[index];
   const unchanged =
     prev &&
-    prev.score === normalized.score &&
     prev.workTime === normalized.workTime &&
     prev.trainingTime === normalized.trainingTime &&
     prev.commit === normalized.commit;
@@ -346,7 +337,6 @@ function openRatingPicker(field) {
 
 function renderDayRating() {
   const data = getDayRating(state.selectedDate);
-  updateRatingPickerDisplay("score", typeof data?.score === "number" ? data.score : null);
   updateRatingPickerDisplay("workTime", data?.workTime ?? "");
   updateRatingPickerDisplay("trainingTime", data?.trainingTime ?? "");
   const commitField = document.getElementById("dayCommitNotes");
@@ -360,9 +350,7 @@ function renderDayRating() {
 function handleDayRatingSelection(field, rawValue) {
   if (!state.selectedDate) return;
   const updates = {};
-  if (field === "score") {
-    updates.score = rawValue === "" || rawValue == null ? null : Number(rawValue);
-  } else if (field === "workTime") {
+  if (field === "workTime") {
     updates.workTime = rawValue ?? "";
   } else if (field === "trainingTime") {
     updates.trainingTime = rawValue ?? "";

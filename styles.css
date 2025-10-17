@@ -295,6 +295,10 @@ select:focus-visible {
   font-weight: 600;
   color: var(--muted);
   letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  white-space: nowrap;
 }
 
 .calendar-day.placeholder {
@@ -325,7 +329,7 @@ select:focus-visible {
 .day-header {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.55rem;
   align-items: flex-start;
 }
 
@@ -336,20 +340,20 @@ select:focus-visible {
 .day-rating-inline {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.2rem;
 }
 
 .rating-line {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.3rem;
   align-items: center;
 }
 
 .rating-field {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.2rem;
   position: relative;
 }
 
@@ -428,17 +432,17 @@ select:focus-visible {
 
 .rating-commit-line {
   display: flex;
-  gap: 0.3rem;
+  gap: 0.2rem;
   align-items: flex-start;
 }
 
 .rating-commit-line textarea {
   flex: 1 1 auto;
-  min-height: 2.35rem;
+  min-height: 2.1rem;
   resize: none;
   border: none;
   background: none;
-  padding: 0.25rem 0;
+  padding: 0.15rem 0;
   border-radius: 0;
   font-family: inherit;
   font-size: 0.95rem;
@@ -452,7 +456,7 @@ select:focus-visible {
 
 @media (max-width: 600px) {
   .rating-line {
-    gap: 0.5rem;
+    gap: 0.35rem;
   }
 
   .rating-label {
