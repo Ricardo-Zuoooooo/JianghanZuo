@@ -349,9 +349,9 @@ select:focus-visible {
 }
 
 .rating-select {
-  border: 1px solid transparent;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--surface-2);
+  background: var(--surface);
   color: var(--text);
   font-family: inherit;
   font-weight: 600;
