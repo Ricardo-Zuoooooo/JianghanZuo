@@ -3,6 +3,7 @@ const STORAGE_KEYS = {
   todos: "dm_todos",
   settings: "dm_settings",
   logs: "dm_labLogs",
+  ratings: "dm_dayRatings",
 };
 
 const TIMEZONE_OPTIONS = [
@@ -20,6 +21,7 @@ const state = {
   journal: [],
   todos: [],
   labLogs: [],
+  dayRatings: [],
   settings: { ...DEFAULT_SETTINGS },
   selectedDate: null,
   calendarAnchor: null,
@@ -29,6 +31,38 @@ const state = {
 };
 
 const AUTOSIZE_MAX_HEIGHT = 280;
+
+function normalizeDayRating(entry) {
+  if (!entry || !entry.date) return null;
+  const base = { ...entry };
+  const scoreSource =
+    base.score ?? base.rating ?? base.value ?? (typeof base.selectedScore === "number" ? base.selectedScore : null);
+  let score = null;
+  if (scoreSource !== undefined && scoreSource !== null) {
+    const raw = typeof scoreSource === "string" ? scoreSource.trim() : scoreSource;
+    if (raw !== "") {
+      const numeric = Number(raw);
+      if (Number.isFinite(numeric)) {
+        score = Math.min(10, Math.max(0, Math.round(numeric)));
+      }
+    }
+  }
+  const workTime = base.workTime == null ? "" : String(base.workTime).trim();
+  const trainingTime = base.trainingTime == null ? "" : String(base.trainingTime).trim();
+  const commitSource =
+    base.commit ?? base.note ?? base.summary ?? base.notes ?? base.commitNote ?? base.commitText ?? "";
+  const commit = String(commitSource).replace(/\s+$/u, "");
+  return { date: base.date, score, workTime, trainingTime, commit };
+}
+
+function isDayRatingEmpty(entry) {
+  if (!entry) return true;
+  const hasScore = typeof entry.score === "number" && Number.isFinite(entry.score);
+  const hasWork = typeof entry.workTime === "string" && entry.workTime.trim() !== "";
+  const hasTraining = typeof entry.trainingTime === "string" && entry.trainingTime.trim() !== "";
+  const hasCommit = typeof entry.commit === "string" && entry.commit.trim() !== "";
+  return !hasScore && !hasWork && !hasTraining && !hasCommit;
+}
 
 function normalizeLog(log) {
   const nextLog = { ...log };
@@ -196,6 +230,79 @@ function autoResize(element) {
   const newHeight = Math.min(max, element.scrollHeight || 0);
   element.style.height = `${newHeight}px`;
   element.style.overflowY = element.scrollHeight > max ? "auto" : "hidden";
+}
+
+function getDayRating(date) {
+  if (!date) return null;
+  return state.dayRatings.find((entry) => entry.date === date) || null;
+}
+
+function setDayRating(date, updates = {}) {
+  if (!date) return false;
+  const existing = getDayRating(date) || { date };
+  const normalized = normalizeDayRating({ ...existing, ...updates, date });
+  if (!normalized) return false;
+  const index = state.dayRatings.findIndex((entry) => entry.date === date);
+  if (isDayRatingEmpty(normalized)) {
+    if (index !== -1) {
+      state.dayRatings.splice(index, 1);
+      persist(STORAGE_KEYS.ratings, state.dayRatings);
+      return true;
+    }
+    return false;
+  }
+  if (index === -1) {
+    state.dayRatings.push(normalized);
+    persist(STORAGE_KEYS.ratings, state.dayRatings);
+    return true;
+  }
+  const prev = state.dayRatings[index];
+  const unchanged =
+    prev &&
+    prev.score === normalized.score &&
+    prev.workTime === normalized.workTime &&
+    prev.trainingTime === normalized.trainingTime &&
+    prev.commit === normalized.commit;
+  if (unchanged) {
+    return false;
+  }
+  state.dayRatings[index] = normalized;
+  persist(STORAGE_KEYS.ratings, state.dayRatings);
+  return true;
+}
+
+function renderDayRating() {
+  const scoreField = document.getElementById("dayRatingScore");
+  const workField = document.getElementById("dayWorkTime");
+  const trainingField = document.getElementById("dayTrainingTime");
+  const commitField = document.getElementById("dayCommitNotes");
+  if (!scoreField || !workField || !trainingField || !commitField) return;
+  const data = getDayRating(state.selectedDate);
+  scoreField.value = typeof data?.score === "number" ? String(data.score) : "";
+  workField.value = data?.workTime || "";
+  trainingField.value = data?.trainingTime || "";
+  commitField.value = data?.commit || "";
+  autoResize(commitField);
+}
+
+function handleDayRatingInput() {
+  if (!state.selectedDate) return;
+  const scoreField = document.getElementById("dayRatingScore");
+  const workField = document.getElementById("dayWorkTime");
+  const trainingField = document.getElementById("dayTrainingTime");
+  const commitField = document.getElementById("dayCommitNotes");
+  if (!scoreField || !workField || !trainingField || !commitField) return;
+  const scoreValue = scoreField.value;
+  const score = scoreValue === "" ? null : Number(scoreValue);
+  const changed = setDayRating(state.selectedDate, {
+    score,
+    workTime: workField.value,
+    trainingTime: trainingField.value,
+    commit: commitField.value,
+  });
+  if (changed) {
+    renderCalendar();
+  }
 }
 
 function setupAutoResize(element) {
@@ -414,10 +521,12 @@ function loadState() {
     const todosRaw = localStorage.getItem(STORAGE_KEYS.todos);
     const settingsRaw = localStorage.getItem(STORAGE_KEYS.settings);
     const logsRaw = localStorage.getItem(STORAGE_KEYS.logs);
+    const ratingsRaw = localStorage.getItem(STORAGE_KEYS.ratings);
     if (journalRaw) state.journal = JSON.parse(journalRaw);
     if (todosRaw) state.todos = JSON.parse(todosRaw);
     if (settingsRaw) state.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(settingsRaw) };
     if (logsRaw) state.labLogs = JSON.parse(logsRaw);
+    if (ratingsRaw) state.dayRatings = JSON.parse(ratingsRaw);
   } catch (error) {
     console.error("Failed to load local state", error);
   }
@@ -425,6 +534,12 @@ function loadState() {
     state.labLogs = [];
   }
   state.labLogs = state.labLogs.map((log) => normalizeLog(log));
+  if (!Array.isArray(state.dayRatings)) {
+    state.dayRatings = [];
+  }
+  state.dayRatings = state.dayRatings
+    .map((entry) => normalizeDayRating(entry))
+    .filter((entry) => entry && !isDayRatingEmpty(entry));
   if (!TIMEZONE_OPTIONS.some((opt) => opt.value === state.settings.timeZone)) {
     state.settings.timeZone = DEFAULT_SETTINGS.timeZone;
   }
@@ -441,6 +556,7 @@ function saveAll() {
   persist(STORAGE_KEYS.journal, state.journal);
   persist(STORAGE_KEYS.todos, state.todos);
   persist(STORAGE_KEYS.logs, state.labLogs);
+  persist(STORAGE_KEYS.ratings, state.dayRatings);
 }
 
 function saveSettings() {
@@ -500,6 +616,7 @@ function setTimeZone(value) {
     if (journalDate) journalDate.value = state.selectedDate || now.date;
     if (journalTime) journalTime.value = now.time;
   }
+  renderDayRating();
   renderCalendar();
   renderTodos();
   renderJournal();
@@ -604,6 +721,7 @@ function setSelectedDate(date) {
   const exportTo = document.getElementById("exportDateTo");
   if (exportFrom && !exportFrom.value) exportFrom.value = date;
   if (exportTo && !exportTo.value) exportTo.value = date;
+  renderDayRating();
   renderTodos();
   renderJournal();
   renderLogs();
@@ -1388,7 +1506,9 @@ function renderCalendar() {
     cell.setAttribute("role", "gridcell");
     cell.innerHTML = `<span class="day-number">${String(day).padStart(2, "0")}</span>`;
 
-    const hasContent = state.todos.some((t) => t.date === date);
+    const hasTodoContent = state.todos.some((t) => t.date === date);
+    const hasRatingContent = state.dayRatings.some((entry) => entry.date === date);
+    const hasContent = hasTodoContent || hasRatingContent;
     if (hasContent) {
       const star = document.createElement("span");
       star.className = "day-star";
@@ -1476,6 +1596,20 @@ function setupEventHandlers() {
     addStepBtn.addEventListener("click", () => {
       const row = addLogStepRow();
       row?.querySelector(".step-note")?.focus();
+    });
+  }
+
+  const dayRatingScore = document.getElementById("dayRatingScore");
+  const dayWorkTime = document.getElementById("dayWorkTime");
+  const dayTrainingTime = document.getElementById("dayTrainingTime");
+  const dayCommitNotes = document.getElementById("dayCommitNotes");
+  dayRatingScore?.addEventListener("change", handleDayRatingInput);
+  dayWorkTime?.addEventListener("input", handleDayRatingInput);
+  dayTrainingTime?.addEventListener("input", handleDayRatingInput);
+  if (dayCommitNotes) {
+    dayCommitNotes.addEventListener("input", (event) => {
+      autoResize(event.target);
+      handleDayRatingInput();
     });
   }
   logForm?.addEventListener("keydown", (event) => {
@@ -1930,6 +2064,7 @@ function initialize() {
   const exportTo = document.getElementById("exportDateTo");
   if (exportFrom) exportFrom.value = state.selectedDate;
   if (exportTo) exportTo.value = state.selectedDate;
+  renderDayRating();
   renderCalendar();
   renderTodos();
   renderJournal();

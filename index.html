@@ -46,9 +46,48 @@
 
     <section class="day-panel" aria-label="Selected day details">
       <div class="day-header">
-        <div>
+        <div class="day-title">
           <h2 id="selectedDateLabel"></h2>
         </div>
+        <section id="dayRatingModule" class="day-rating card" aria-label="Rate my day">
+          <h3>Rate my day</h3>
+          <div class="day-rating-row">
+            <label for="dayRatingScore">Score</label>
+            <select id="dayRatingScore" name="dayRatingScore">
+              <option value="">--</option>
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+          <div class="day-rating-grid">
+            <div class="day-rating-field">
+              <label for="dayWorkTime">Work time</label>
+              <input id="dayWorkTime" type="text" placeholder="e.g. 6h" />
+            </div>
+            <div class="day-rating-field">
+              <label for="dayTrainingTime">Training time</label>
+              <input id="dayTrainingTime" type="text" placeholder="e.g. 1h" />
+            </div>
+          </div>
+          <div class="day-rating-field">
+            <label for="dayCommitNotes">Commit</label>
+            <textarea
+              id="dayCommitNotes"
+              class="auto-resize"
+              rows="1"
+              placeholder="Highlights or summary"
+            ></textarea>
+          </div>
+        </section>
       </div>
 
       <section class="todo-section" aria-labelledby="todoHeading">

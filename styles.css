@@ -303,7 +303,71 @@ select:focus-visible {
 .day-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.day-title {
+  flex: 1 1 auto;
+  min-width: 12rem;
+}
+
+.day-rating {
+  flex: 0 0 18rem;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+}
+
+.day-rating h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.day-rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.day-rating-row label {
+  font-weight: 600;
+}
+
+.day-rating select {
+  width: 7rem;
+}
+
+.day-rating-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.day-rating-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.day-rating-field label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.day-rating textarea {
+  resize: none;
+  min-height: 2.35rem;
+}
+
+@media (max-width: 960px) {
+  .day-rating {
+    flex: 1 1 100%;
+  }
+  .day-rating select {
+    width: 100%;
+  }
 }
 
 .day-subtitle {
