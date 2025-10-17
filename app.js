@@ -279,8 +279,8 @@ function renderDayRating() {
   if (!scoreField || !workField || !trainingField || !commitField) return;
   const data = getDayRating(state.selectedDate);
   scoreField.value = typeof data?.score === "number" ? String(data.score) : "";
-  workField.value = data?.workTime || "";
-  trainingField.value = data?.trainingTime || "";
+  workField.value = data?.workTime != null ? String(data.workTime) : "";
+  trainingField.value = data?.trainingTime != null ? String(data.trainingTime) : "";
   commitField.value = data?.commit || "";
   autoResize(commitField);
 }
@@ -1604,6 +1604,7 @@ function setupEventHandlers() {
   const dayTrainingTime = document.getElementById("dayTrainingTime");
   const dayCommitNotes = document.getElementById("dayCommitNotes");
   dayRatingScore?.addEventListener("change", handleDayRatingInput);
+  dayRatingScore?.addEventListener("input", handleDayRatingInput);
   dayWorkTime?.addEventListener("input", handleDayRatingInput);
   dayTrainingTime?.addEventListener("input", handleDayRatingInput);
   if (dayCommitNotes) {
