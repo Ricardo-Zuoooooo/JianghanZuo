@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <h1>Daily Manager</h1>
+      <div class="subtitle timezone-picker" id="timezonePicker">
+        <button
+          id="timezoneButton"
+          type="button"
+          class="timezone-btn"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          aria-controls="timezoneMenu"
+        >
+          Europe/London
+        </button>
+        <ul id="timezoneMenu" class="timezone-menu" role="listbox" hidden>
+          <li role="option" data-value="Europe/London" tabindex="0">Europe/London</li>
+          <li role="option" data-value="Asia/Shanghai" tabindex="0">China</li>
+        </ul>
+      </div>
+    </div>
+    <div class="header-right">
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle theme" title="Toggle theme (T)">
+        <span class="icon">🌗</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="calendar-panel" aria-label="Calendar">
+      <div class="calendar-nav">
+        <button id="prevPeriod" class="btn" type="button" aria-label="Previous month">◀</button>
+        <div id="calendarLabel" aria-live="polite"></div>
+        <button id="nextPeriod" class="btn" type="button" aria-label="Next month">▶</button>
+      </div>
+      <div id="calendarGrid" class="calendar-grid" role="grid"></div>
+    </section>
+
+    <section class="day-panel" aria-label="Selected day details">
+      <div class="day-header">
+        <div class="day-title">
+          <h2 id="selectedDateLabel"></h2>
+        </div>
+        <section id="dayRatingModule" class="day-rating card" aria-label="Rate my day">
+          <div class="day-rating-box">
+            <div class="rating-control rating-score" data-field="score">
+              <span id="dayRatingScoreLabel" class="sr-only">Score</span>
+              <button
+                id="dayRatingScore"
+                type="button"
+                class="rating-select"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                aria-labelledby="dayRatingScoreLabel"
+                data-field="score"
+              >
+                --
+              </button>
+              <ul
+                id="dayRatingScoreMenu"
+                class="rating-menu"
+                role="listbox"
+                aria-labelledby="dayRatingScoreLabel"
+                data-field="score"
+                hidden
+              ></ul>
+            </div>
+            <div class="rating-control rating-work" data-field="workTime">
+              <span id="dayWorkTimeLabel" class="sr-only">Work time</span>
+              <button
+                id="dayWorkTime"
+                type="button"
+                class="rating-select"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                aria-labelledby="dayWorkTimeLabel"
+                data-field="workTime"
+              >
+                --
+              </button>
+              <ul
+                id="dayWorkTimeMenu"
+                class="rating-menu"
+                role="listbox"
+                aria-labelledby="dayWorkTimeLabel"
+                data-field="workTime"
+                hidden
+              ></ul>
+            </div>
+            <div class="rating-control rating-training" data-field="trainingTime">
+              <span id="dayTrainingTimeLabel" class="sr-only">Training time</span>
+              <button
+                id="dayTrainingTime"
+                type="button"
+                class="rating-select"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                aria-labelledby="dayTrainingTimeLabel"
+                data-field="trainingTime"
+              >
+                --
+              </button>
+              <ul
+                id="dayTrainingTimeMenu"
+                class="rating-menu"
+                role="listbox"
+                aria-labelledby="dayTrainingTimeLabel"
+                data-field="trainingTime"
+                hidden
+              ></ul>
+            </div>
+          </div>
+          <div class="day-rating-field">
+            <label for="dayCommitNotes">Commit</label>
+            <textarea
+              id="dayCommitNotes"
+              class="auto-resize"
+              rows="1"
+              placeholder="Highlights or summary"
+            ></textarea>
+          </div>
+        </section>
+      </div>
+
+      <section class="todo-section" aria-labelledby="todoHeading">
+        <div class="section-header simple">
+          <h3 id="todoHeading">Todos</h3>
+          <button id="newTodoBtn" class="circle-btn" type="button" title="New todo (N)" aria-label="New todo">＋</button>
+        </div>
+        <form id="todoForm" class="card inline-form" aria-label="Create or edit todo" hidden>
+          <div class="form-row">
+            <input id="todoTitle" name="title" type="text" placeholder="Todo title" required />
+          </div>
+          <textarea
+            id="todoNote"
+            class="auto-resize"
+            name="note"
+            rows="1"
+            placeholder="Notes (Enter to save, Esc to cancel)"
+          ></textarea>
+          <div class="form-actions">
+            <button type="submit" class="btn primary">Save Todo</button>
+            <button type="button" id="cancelTodo" class="btn ghost">Cancel</button>
+          </div>
+        </form>
+        <ul id="todoList" class="todo-list" aria-live="polite"></ul>
+      </section>
+
+    </section>
+  </main>
+
+  <section class="log-board" aria-labelledby="logHeading">
+    <div class="log-board-inner">
+      <div class="section-header simple">
+        <h3 id="logHeading">Research Logs</h3>
+        <button id="newLogBtn" class="circle-btn" type="button" title="New research log (L)" aria-label="New research log">＋</button>
+      </div>
+      <form id="logForm" class="card research-form inline-form" aria-label="Create or edit research log" hidden>
+        <div class="form-row">
+          <input id="logTitle" name="title" type="text" placeholder="Log title" required />
+        </div>
+        <textarea
+          id="logDescription"
+          class="auto-resize"
+          name="description"
+          rows="1"
+          placeholder="Overview or context"
+        ></textarea>
+        <textarea
+          id="logResults"
+          class="auto-resize"
+          name="results"
+          rows="1"
+          placeholder="Results or observations"
+        ></textarea>
+        <div class="log-steps">
+          <div class="steps-header">
+            <h4>Operations</h4>
+            <button type="button" id="addLogStep" class="text-btn">Add step</button>
+          </div>
+          <div id="logStepsContainer" class="log-steps-container"></div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Save Log</button>
+          <button type="button" id="cancelLog" class="btn ghost">Cancel</button>
+        </div>
+      </form>
+      <ol id="logList" class="log-list" aria-live="polite"></ol>
+    </div>
+  </section>
+
+  <section class="export-panel" aria-label="Export data">
+    <h3>Export</h3>
+    <div class="export-card export-combined">
+      <div class="export-row">
+        <div class="export-field">
+          <label for="exportDateFrom">Start date</label>
+          <input id="exportDateFrom" type="date" />
+        </div>
+        <div class="export-field">
+          <label for="exportDateTo">End date</label>
+          <input id="exportDateTo" type="date" />
+        </div>
+      </div>
+      <div class="export-actions">
+        <button id="exportTodosTxtRange" class="btn" type="button">Export todo TXT</button>
+        <button id="exportLogsTxt" class="btn" type="button">Export research log TXT</button>
+      </div>
+    </div>
+  </section>
+
+  <template id="todoItemTemplate">
+    <li class="todo-item" draggable="true">
+      <div class="item-main">
+        <label class="item-checkbox">
+          <input type="checkbox" class="todo-done" />
+          <span aria-hidden="true"></span>
+        </label>
+        <div class="item-content">
+          <div class="item-title todo-title"></div>
+          <div class="item-meta todo-meta"></div>
+        </div>
+      </div>
+      <div class="item-actions" role="group" aria-label="Todo actions">
+        <button class="icon-action edit" type="button" title="Edit">✎</button>
+        <button class="icon-action delete" type="button" title="Delete">✕</button>
+      </div>
+    </li>
+  </template>
+
+  <template id="logItemTemplate">
+    <li class="log-item">
+      <div class="item-main">
+        <div class="item-content">
+          <div class="item-title log-title"></div>
+          <div class="item-meta log-meta"></div>
+          <div class="log-description"></div>
+          <div class="log-results"></div>
+          <ul class="log-operations"></ul>
+        </div>
+      </div>
+      <div class="item-actions" role="group" aria-label="Research log actions">
+        <button class="icon-action edit" type="button" title="Edit">✎</button>
+        <button class="icon-action delete" type="button" title="Delete">✕</button>
+      </div>
+    </li>
+  </template>
+
+  <div id="toast" role="status" aria-live="assertive"></div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
