@@ -314,36 +314,38 @@ select:focus-visible {
 
 .day-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.75rem;
   align-items: flex-start;
-  gap: 1.5rem;
+}
+
+.day-title h2 {
+  margin-bottom: 0;
+}
+
+.day-rating-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rating-line {
+  display: flex;
   flex-wrap: wrap;
+  gap: 0.9rem;
+  align-items: center;
 }
 
-.day-title {
-  flex: 1 1 auto;
-  min-width: 12rem;
-}
-
-.day-rating {
-  flex: 0 0 auto;
-  padding: 0.35rem;
+.rating-field {
   display: flex;
   align-items: center;
-  justify-content: center;
-}
-
-.day-rating-box {
+  gap: 0.4rem;
   position: relative;
-  width: min(4rem, 100%);
-  aspect-ratio: 1 / 1;
 }
 
-.rating-control {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.rating-label {
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .rating-select {
@@ -354,9 +356,9 @@ select:focus-visible {
   font-family: inherit;
   font-weight: 600;
   text-align: center;
-  min-width: 2.6rem;
-  min-height: 2.6rem;
-  padding: 0.15rem 0.35rem;
+  min-width: 2.75rem;
+  min-height: 2.2rem;
+  padding: 0.1rem 0.6rem;
   cursor: pointer;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
   display: inline-flex;
@@ -383,40 +385,10 @@ select:focus-visible {
   color: var(--muted);
 }
 
-.rating-control.rating-score {
-  top: 6%;
-  right: 6%;
-}
-
-.rating-control.rating-score .rating-select {
-  font-size: clamp(1.6rem, 4.5vw, 2rem);
-  font-weight: 700;
-  min-width: 3rem;
-  min-height: 3rem;
-}
-
-.rating-control.rating-work {
-  bottom: 8%;
-  left: 8%;
-}
-
-.rating-control.rating-training {
-  bottom: 8%;
-  right: 8%;
-}
-
-.rating-control.rating-work .rating-select,
-.rating-control.rating-training .rating-select {
-  font-size: clamp(0.95rem, 3vw, 1.1rem);
-  font-weight: 600;
-  min-width: 2.55rem;
-  min-height: 2.55rem;
-}
-
-.rating-menu {
+.rating-field .rating-menu {
   position: absolute;
-  inset-inline-end: 0;
-  top: 108%;
+  inset-inline-start: 0;
+  top: calc(100% + 0.25rem);
   margin: 0;
   padding: 0.35rem 0;
   list-style: none;
@@ -449,24 +421,25 @@ select:focus-visible {
   font-weight: 700;
 }
 
-.day-commit {
-  margin-top: 0.65rem;
+.rating-commit-line {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
 }
 
-.day-commit textarea {
-  resize: none;
+.rating-commit-line textarea {
+  flex: 1 1 auto;
   min-height: 2.35rem;
+  resize: none;
 }
 
-@media (max-width: 960px) {
-  .day-rating {
-    flex: 1 1 auto;
-    max-width: 5.5rem;
+@media (max-width: 600px) {
+  .rating-line {
+    gap: 0.6rem;
   }
-  .day-rating-box {
-    width: min(100%, 5rem);
-    height: auto;
-    aspect-ratio: 1 / 1;
+
+  .rating-label {
+    font-size: 0.9rem;
   }
 }
 

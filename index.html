@@ -49,10 +49,10 @@
         <div class="day-title">
           <h2 id="selectedDateLabel"></h2>
         </div>
-        <section id="dayRatingModule" class="day-rating card" aria-label="Rate my day">
-          <div class="day-rating-box">
-            <div class="rating-control rating-score" data-field="score">
-              <span id="dayRatingScoreLabel" class="sr-only">Score</span>
+        <section id="dayRatingModule" class="day-rating-inline" aria-label="Rate my day">
+          <div class="rating-line">
+            <div class="rating-field" data-field="score">
+              <span id="dayRatingScoreLabel" class="rating-label">Score:</span>
               <button
                 id="dayRatingScore"
                 type="button"
@@ -73,8 +73,8 @@
                 hidden
               ></ul>
             </div>
-            <div class="rating-control rating-work" data-field="workTime">
-              <span id="dayWorkTimeLabel" class="sr-only">Work time</span>
+            <div class="rating-field" data-field="workTime">
+              <span id="dayWorkTimeLabel" class="rating-label">Working time:</span>
               <button
                 id="dayWorkTime"
                 type="button"
@@ -95,8 +95,8 @@
                 hidden
               ></ul>
             </div>
-            <div class="rating-control rating-training" data-field="trainingTime">
-              <span id="dayTrainingTimeLabel" class="sr-only">Training time</span>
+            <div class="rating-field" data-field="trainingTime">
+              <span id="dayTrainingTimeLabel" class="rating-label">Training time:</span>
               <button
                 id="dayTrainingTime"
                 type="button"
@@ -118,18 +118,17 @@
               ></ul>
             </div>
           </div>
+          <div class="rating-commit-line">
+            <label for="dayCommitNotes" class="rating-label">Commit:</label>
+            <textarea
+              id="dayCommitNotes"
+              class="auto-resize"
+              rows="1"
+              placeholder="Highlights or summary"
+            ></textarea>
+          </div>
         </section>
       </div>
-
-      <section class="day-commit card" aria-label="Day commit notes">
-        <label class="sr-only" for="dayCommitNotes">Commit</label>
-        <textarea
-          id="dayCommitNotes"
-          class="auto-resize"
-          rows="1"
-          placeholder="Highlights or summary"
-        ></textarea>
-      </section>
 
       <section class="todo-section" aria-labelledby="todoHeading">
         <div class="section-header simple">
