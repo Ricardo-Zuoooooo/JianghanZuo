@@ -168,6 +168,7 @@ a {
 }
 
 .icon-btn:focus-visible,
+.ledger-toggle:focus-visible,
 .circle-btn:focus-visible,
 .btn:focus-visible,
 .timezone-btn:focus-visible,
@@ -553,6 +554,99 @@ select:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.ledger-section {
+  margin-top: 1.5rem;
+}
+
+.ledger-header {
+  align-items: center;
+}
+
+.ledger-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ledger-toggle {
+  border: none;
+  background: transparent;
+  padding: 0.35rem;
+  border-radius: 999px;
+  line-height: 1;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: inherit;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.ledger-toggle:hover,
+.ledger-toggle:focus-visible {
+  background: rgba(60, 113, 245, 0.14);
+  transform: translateY(-1px);
+}
+
+body[data-theme="dark"] .ledger-toggle:hover,
+body[data-theme="dark"] .ledger-toggle:focus-visible {
+  background: rgba(60, 113, 245, 0.22);
+}
+
+.ledger-toggle.collapsed {
+  opacity: 0.65;
+}
+
+.ledger-body {
+  gap: 1rem;
+}
+
+.ledger-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.ledger-total output {
+  font-variant-numeric: tabular-nums;
+}
+
+.ledger-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 720px) {
+  .ledger-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ledger-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ledger-field label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.ledger-input {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.65rem 0.75rem;
+  color: inherit;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ledger-input:focus-visible {
+  outline: none;
 }
 
 .form-row {

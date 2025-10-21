@@ -4,6 +4,7 @@ const STORAGE_KEYS = {
   settings: "dm_settings",
   logs: "dm_labLogs",
   ratings: "dm_dayRatings",
+  ledger: "dm_ledger",
 };
 
 const TIMEZONE_OPTIONS = [
@@ -15,6 +16,20 @@ const DAY_RATING_PICKERS = [
   { field: "workTime", buttonId: "dayWorkTime", menuId: "dayWorkTimeMenu", label: "Working time", min: 0, max: 10, allowNull: true },
   { field: "trainingTime", buttonId: "dayTrainingTime", menuId: "dayTrainingTimeMenu", label: "Training time", min: 0, max: 10, allowNull: true },
 ];
+
+const LEDGER_FIELDS = [
+  { key: "alipay", label: "Alipay" },
+  { key: "wechat", label: "WeChat" },
+  { key: "bankCn", label: "Bank Account (cn)" },
+  { key: "bankUkDebt", label: "Bank Account (uk) Debt" },
+];
+
+const LEDGER_TOTAL_KEYS = ["alipay", "wechat", "bankCn"];
+
+const DEFAULT_LEDGER = LEDGER_FIELDS.reduce((acc, field) => {
+  acc[field.key] = "";
+  return acc;
+}, {});
 
 const MS_PER_DAY = 86_400_000;
 
@@ -28,6 +43,7 @@ const state = {
   todos: [],
   labLogs: [],
   dayRatings: [],
+  ledger: { ...DEFAULT_LEDGER },
   settings: { ...DEFAULT_SETTINGS },
   selectedDate: null,
   calendarAnchor: null,
@@ -67,6 +83,37 @@ function normalizeDayRating(entry) {
     base.commit ?? base.note ?? base.summary ?? base.notes ?? base.commitNote ?? base.commitText ?? "";
   const commit = String(commitSource).replace(/\s+$/u, "");
   return { date: base.date, workTime, trainingTime, commit };
+}
+
+function normalizeLedger(raw) {
+  const base = { ...DEFAULT_LEDGER };
+  if (raw && typeof raw === "object") {
+    LEDGER_FIELDS.forEach(({ key }) => {
+      if (Object.prototype.hasOwnProperty.call(raw, key)) {
+        const value = raw[key];
+        base[key] = value == null ? "" : String(value);
+      }
+    });
+  }
+  return base;
+}
+
+function ledgerValueToNumber(value) {
+  if (value == null) return 0;
+  const normalized = typeof value === "string" ? value.replace(/,/g, "").trim() : String(value).trim();
+  if (!normalized) return 0;
+  const numeric = Number(normalized);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+const ledgerNumberFormatter = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+});
+
+function formatLedgerTotal(value) {
+  if (!Number.isFinite(value)) return "0";
+  return ledgerNumberFormatter.format(value);
 }
 
 function toUtcMidnight(dateStr) {
@@ -706,11 +753,13 @@ function loadState() {
     const settingsRaw = localStorage.getItem(STORAGE_KEYS.settings);
     const logsRaw = localStorage.getItem(STORAGE_KEYS.logs);
     const ratingsRaw = localStorage.getItem(STORAGE_KEYS.ratings);
+    const ledgerRaw = localStorage.getItem(STORAGE_KEYS.ledger);
     if (journalRaw) state.journal = JSON.parse(journalRaw);
     if (todosRaw) state.todos = JSON.parse(todosRaw);
     if (settingsRaw) state.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(settingsRaw) };
     if (logsRaw) state.labLogs = JSON.parse(logsRaw);
     if (ratingsRaw) state.dayRatings = JSON.parse(ratingsRaw);
+    if (ledgerRaw) state.ledger = JSON.parse(ledgerRaw);
   } catch (error) {
     console.error("Failed to load local state", error);
   }
@@ -724,6 +773,7 @@ function loadState() {
   state.dayRatings = state.dayRatings
     .map((entry) => normalizeDayRating(entry))
     .filter((entry) => entry && !isDayRatingEmpty(entry));
+  state.ledger = normalizeLedger(state.ledger);
   if (!TIMEZONE_OPTIONS.some((opt) => opt.value === state.settings.timeZone)) {
     state.settings.timeZone = DEFAULT_SETTINGS.timeZone;
   }
@@ -745,6 +795,7 @@ function saveAll() {
   persist(STORAGE_KEYS.todos, state.todos);
   persist(STORAGE_KEYS.logs, state.labLogs);
   persist(STORAGE_KEYS.ratings, state.dayRatings);
+  persist(STORAGE_KEYS.ledger, state.ledger);
 }
 
 function saveSettings() {
@@ -1452,6 +1503,101 @@ function renderJournal() {
 
   list.appendChild(fragment);
   attachJournalEvents();
+}
+
+function calculateLedgerTotal() {
+  return LEDGER_TOTAL_KEYS.reduce((sum, key) => {
+    const value = state.ledger?.[key];
+    return sum + ledgerValueToNumber(value);
+  }, 0);
+}
+
+function renderLedgerTotal() {
+  const totalEl = document.getElementById("ledgerTotal");
+  if (!totalEl) return;
+  const total = calculateLedgerTotal();
+  totalEl.textContent = formatLedgerTotal(total);
+}
+
+function renderLedger() {
+  const container = document.getElementById("ledgerBody");
+  if (!container) return;
+  LEDGER_FIELDS.forEach(({ key }) => {
+    const input = container.querySelector(`[data-ledger-field="${key}"]`);
+    if (!input) return;
+    const value = state.ledger?.[key] ?? "";
+    if (input.value !== value) {
+      input.value = value;
+    }
+  });
+  renderLedgerTotal();
+}
+
+function saveLedger() {
+  persist(STORAGE_KEYS.ledger, state.ledger);
+}
+
+function updateLedgerField(field, value) {
+  if (!LEDGER_FIELDS.some(({ key }) => key === field)) return;
+  const normalized = value == null ? "" : String(value);
+  if (state.ledger[field] === normalized) {
+    renderLedgerTotal();
+    return;
+  }
+  state.ledger[field] = normalized;
+  saveLedger();
+  renderLedgerTotal();
+}
+
+function handleLedgerInputEvent(event) {
+  const input = event.currentTarget;
+  const field = input?.dataset?.ledgerField;
+  if (!field) return;
+  updateLedgerField(field, input.value);
+}
+
+function handleLedgerBlur(event) {
+  const input = event.currentTarget;
+  const field = input?.dataset?.ledgerField;
+  if (!field) return;
+  const trimmed = input.value.trim();
+  if (trimmed !== input.value) {
+    input.value = trimmed;
+  }
+  updateLedgerField(field, trimmed);
+}
+
+function toggleLedgerVisibility() {
+  const body = document.getElementById("ledgerBody");
+  const toggle = document.getElementById("toggleLedger");
+  if (!body || !toggle) return;
+  const willHide = !body.hidden;
+  body.hidden = willHide;
+  const expanded = !body.hidden;
+  toggle.setAttribute("aria-expanded", String(expanded));
+  toggle.setAttribute("aria-label", expanded ? "Hide ledger" : "Show ledger");
+  toggle.setAttribute("title", expanded ? "Hide ledger" : "Show ledger");
+  toggle.classList.toggle("collapsed", !expanded);
+}
+
+function setupLedgerModule() {
+  const toggle = document.getElementById("toggleLedger");
+  const body = document.getElementById("ledgerBody");
+  if (toggle && body) {
+    toggle.addEventListener("click", () => {
+      toggleLedgerVisibility();
+    });
+    const expanded = !body.hidden;
+    toggle.setAttribute("aria-expanded", String(expanded));
+    toggle.setAttribute("aria-label", expanded ? "Hide ledger" : "Show ledger");
+    toggle.setAttribute("title", expanded ? "Hide ledger" : "Show ledger");
+    toggle.classList.toggle("collapsed", !expanded);
+  }
+  const inputs = document.querySelectorAll("[data-ledger-field]");
+  inputs.forEach((input) => {
+    input.addEventListener("input", handleLedgerInputEvent);
+    input.addEventListener("blur", handleLedgerBlur);
+  });
 }
 
 function renderLogs() {
@@ -2300,6 +2446,7 @@ function initialize() {
   setupTimezonePicker();
   setupDayRatingPickers();
   setupEventHandlers();
+  setupLedgerModule();
   const now = nowInTimeZone();
   const journalDate = document.getElementById("journalDate");
   const journalTime = document.getElementById("journalTime");
@@ -2316,6 +2463,7 @@ function initialize() {
   renderCalendar();
   renderTodos();
   renderJournal();
+  renderLedger();
   renderLogs();
 }
 

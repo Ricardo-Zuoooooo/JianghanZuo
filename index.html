@@ -145,6 +145,81 @@
         <ul id="todoList" class="todo-list" aria-live="polite"></ul>
       </section>
 
+      <section class="ledger-section" aria-labelledby="ledgerHeading">
+        <div class="section-header simple ledger-header">
+          <div class="ledger-title">
+            <h3 id="ledgerHeading">Ledger</h3>
+            <button
+              id="toggleLedger"
+              class="ledger-toggle"
+              type="button"
+              aria-controls="ledgerBody"
+              aria-expanded="true"
+              aria-label="Hide ledger"
+              title="Hide ledger"
+            >
+              <span aria-hidden="true">👁</span>
+            </button>
+          </div>
+        </div>
+        <div id="ledgerBody" class="ledger-body card" role="group" aria-labelledby="ledgerHeading">
+          <div class="ledger-total">
+            <span>Total</span>
+            <output id="ledgerTotal" aria-live="polite">0</output>
+          </div>
+          <div class="ledger-grid">
+            <div class="ledger-field">
+              <label for="ledgerAlipay">Alipay</label>
+              <input
+                id="ledgerAlipay"
+                class="ledger-input"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                data-ledger-field="alipay"
+                placeholder="0"
+              />
+            </div>
+            <div class="ledger-field">
+              <label for="ledgerWeChat">WeChat</label>
+              <input
+                id="ledgerWeChat"
+                class="ledger-input"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                data-ledger-field="wechat"
+                placeholder="0"
+              />
+            </div>
+            <div class="ledger-field">
+              <label for="ledgerBankCn">Bank Account (cn)</label>
+              <input
+                id="ledgerBankCn"
+                class="ledger-input"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                data-ledger-field="bankCn"
+                placeholder="0"
+              />
+            </div>
+            <div class="ledger-field">
+              <label for="ledgerBankUkDebt">Bank Account (uk) Debt</label>
+              <input
+                id="ledgerBankUkDebt"
+                class="ledger-input"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                data-ledger-field="bankUkDebt"
+                placeholder="0"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
     </section>
   </main>
 

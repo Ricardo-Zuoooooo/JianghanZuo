@@ -16,10 +16,11 @@ The `index.html`, `styles.css`, and `app.js` files in the repository root make u
      python -m http.server 8000
      ```
      Then visit http://localhost:8000/index.html.
-3. The app starts in the Europe/London timezone and persists data to `localStorage` using the keys `dm_journal`, `dm_todos`, `dm_labLogs`, `dm_dayRatings`, and `dm_settings`. Click the timezone label below the title to switch between Europe/London and China. Refreshing the page keeps your data intact.
+3. The app starts in the Europe/London timezone and persists data to `localStorage` using the keys `dm_journal`, `dm_todos`, `dm_labLogs`, `dm_dayRatings`, `dm_ledger`, and `dm_settings`. Click the timezone label below the title to switch between Europe/London and China. Refreshing the page keeps your data intact.
 4. Track daily todos and capture a "Rate my day" score (0–10) with work time, training time, and a commit summary beside the selected date. Research logs capture an experiment title, overview, code notes or URLs, detailed auto time-stamped steps, and optional results independent of the calendar view.
-5. Use the Back to today button above the calendar to jump to the current day. Calendar stars turn green when every todo for that date is complete; otherwise they stay yellow/orange/red based on how far the day is from today and display any recorded work/training times beside the star.
-6. To archive or migrate your information, pick a date range in the export card at the bottom of the page and download TXT files for todos or research logs.
+5. Record balances in the Ledger panel under the todo list. Alipay, WeChat, and Bank Account (cn) values roll into the Total row automatically, while Bank Account (uk) Debt stays independent of the daily calendar.
+6. Use the Back to today button above the calendar to jump to the current day. Calendar stars turn green when every todo for that date is complete; otherwise they stay yellow/orange/red based on how far the day is from today and display any recorded work/training times beside the star.
+7. To archive or migrate your information, pick a date range in the export card at the bottom of the page and download TXT files for todos or research logs.
 
 > If you only need the Jekyll site, continue with the existing “Running locally” section below.
 
