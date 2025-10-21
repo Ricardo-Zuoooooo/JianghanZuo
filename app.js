@@ -1699,8 +1699,6 @@ function renderCalendar() {
     const hasTodoContent = todosForDate.length > 0;
     const allTodosDone = hasTodoContent && todosForDate.every((todo) => todo.done);
     const ratingEntry = state.dayRatings.find((entry) => entry.date === date) || null;
-    const hasRatingContent = Boolean(ratingEntry);
-
     let hasTimes = false;
     let workValue = "";
     let trainingValue = "";
@@ -1716,8 +1714,13 @@ function renderCalendar() {
       }
     }
 
-    const hasContent = hasTodoContent || hasRatingContent;
-    if (hasContent) {
+    const labelParts = [hasTodoContent ? `${date} has todos` : date];
+
+    if (hasTimes) {
+      labelParts.push(`work ${workValue}, training ${trainingValue}`);
+    }
+
+    if (hasTodoContent) {
       const indicator = document.createElement("span");
       indicator.className = "day-indicator";
 
@@ -1750,20 +1753,14 @@ function renderCalendar() {
       indicator.appendChild(star);
       cell.appendChild(indicator);
 
-      const labelParts = [`${date} has entries`];
-      if (hasTimes) {
-        labelParts.push(`work ${workValue}, training ${trainingValue}`);
-      }
       if (allTodosDone) {
         labelParts.push("todos complete");
       }
-      const labelText = labelParts.join(", ");
-      cell.setAttribute("aria-label", labelText);
-      cell.title = labelText;
-    } else {
-      cell.setAttribute("aria-label", date);
-      cell.title = date;
     }
+
+    const labelText = labelParts.join(", ");
+    cell.setAttribute("aria-label", labelText);
+    cell.title = labelText;
 
     if (date === state.selectedDate) {
       cell.classList.add("selected");
