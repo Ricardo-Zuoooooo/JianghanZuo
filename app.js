@@ -20,7 +20,6 @@ const MS_PER_DAY = 86_400_000;
 
 const DEFAULT_SETTINGS = {
   theme: "light",
-  selectedDate: null,
   timeZone: TIMEZONE_OPTIONS[0].value,
 };
 
@@ -728,8 +727,12 @@ function loadState() {
   if (!TIMEZONE_OPTIONS.some((opt) => opt.value === state.settings.timeZone)) {
     state.settings.timeZone = DEFAULT_SETTINGS.timeZone;
   }
+  if (Object.prototype.hasOwnProperty.call(state.settings, "selectedDate")) {
+    delete state.settings.selectedDate;
+  }
   const current = nowInTimeZone();
-  state.selectedDate = state.settings.selectedDate || current.date;
+  const today = current?.date || new Date().toISOString().slice(0, 10);
+  state.selectedDate = today;
   state.calendarAnchor = state.selectedDate;
 }
 
@@ -747,7 +750,6 @@ function saveAll() {
 function saveSettings() {
   persist(STORAGE_KEYS.settings, {
     theme: document.body.dataset.theme || "light",
-    selectedDate: state.selectedDate,
     timeZone: getTimeZone(),
   });
 }
@@ -892,7 +894,6 @@ function setupTimezonePicker() {
 
 function setSelectedDate(date) {
   state.selectedDate = date;
-  state.settings.selectedDate = date;
   state.calendarAnchor = date;
   document.getElementById("selectedDateLabel").textContent = formatter.label(date);
   const journalDate = document.getElementById("journalDate");
@@ -1694,7 +1695,9 @@ function renderCalendar() {
     cell.setAttribute("role", "gridcell");
     cell.innerHTML = `<span class="day-number">${String(day).padStart(2, "0")}</span>`;
 
-    const hasTodoContent = state.todos.some((t) => t.date === date);
+    const todosForDate = state.todos.filter((t) => t.date === date);
+    const hasTodoContent = todosForDate.length > 0;
+    const allTodosDone = hasTodoContent && todosForDate.every((todo) => todo.done);
     const ratingEntry = state.dayRatings.find((entry) => entry.date === date) || null;
     const hasRatingContent = Boolean(ratingEntry);
 
@@ -1732,7 +1735,9 @@ function renderCalendar() {
       star.setAttribute("aria-hidden", "true");
 
       const diffFromToday = getDayDifference(date, todayDate);
-      if (diffFromToday != null) {
+      if (allTodosDone) {
+        star.classList.add("star-complete");
+      } else if (diffFromToday != null) {
         if (diffFromToday >= 0) {
           star.classList.add("star-future");
         } else if (diffFromToday >= -7) {
@@ -1748,6 +1753,9 @@ function renderCalendar() {
       const labelParts = [`${date} has entries`];
       if (hasTimes) {
         labelParts.push(`work ${workValue}, training ${trainingValue}`);
+      }
+      if (allTodosDone) {
+        labelParts.push("todos complete");
       }
       const labelText = labelParts.join(", ");
       cell.setAttribute("aria-label", labelText);
@@ -1786,6 +1794,12 @@ function changeCalendarPeriod(offset) {
   }
 }
 
+function goToToday() {
+  const current = nowInTimeZone();
+  const today = current?.date || new Date().toISOString().slice(0, 10);
+  setSelectedDate(today);
+}
+
 function setupEventHandlers() {
   const themeToggle = document.getElementById("themeToggle");
   if (themeToggle) {
@@ -1803,8 +1817,10 @@ function setupEventHandlers() {
 
   const prevPeriod = document.getElementById("prevPeriod");
   const nextPeriod = document.getElementById("nextPeriod");
+  const todayButton = document.getElementById("todayButton");
   prevPeriod?.addEventListener("click", () => changeCalendarPeriod(-1));
   nextPeriod?.addEventListener("click", () => changeCalendarPeriod(1));
+  todayButton?.addEventListener("click", goToToday);
 
   const todoForm = document.getElementById("todoForm");
   const cancelTodo = document.getElementById("cancelTodo");

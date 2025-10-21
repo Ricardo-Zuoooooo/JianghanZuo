@@ -37,9 +37,21 @@
   <main class="layout">
     <section class="calendar-panel" aria-label="Calendar">
       <div class="calendar-nav">
-        <button id="prevPeriod" class="btn" type="button" aria-label="Previous month">◀</button>
+        <div class="calendar-nav-group">
+          <button id="prevPeriod" class="btn" type="button" aria-label="Previous month">◀</button>
+          <button
+            id="todayButton"
+            class="btn ghost today-btn"
+            type="button"
+            aria-label="Back to today"
+          >
+            Back to today
+          </button>
+        </div>
         <div id="calendarLabel" aria-live="polite"></div>
-        <button id="nextPeriod" class="btn" type="button" aria-label="Next month">▶</button>
+        <div class="calendar-nav-group">
+          <button id="nextPeriod" class="btn" type="button" aria-label="Next month">▶</button>
+        </div>
       </div>
       <div id="calendarGrid" class="calendar-grid" role="grid"></div>
     </section>

@@ -13,6 +13,7 @@
   --star-future: #f4c84a;
   --star-recent: #ff8a3d;
   --star-past: #ff4d4f;
+  --star-complete: #27ae60;
   --border: rgba(41, 51, 73, 0.1);
   --border-light: rgba(41, 51, 73, 0.12);
   --shadow: 0 12px 30px rgba(41, 51, 73, 0.1);
@@ -32,6 +33,7 @@ body[data-theme="dark"] {
   --star-future: #ffd64d;
   --star-recent: #ffb76a;
   --star-past: #ff7a78;
+  --star-complete: #5dd98a;
   --border: rgba(255, 255, 255, 0.08);
   --border-light: rgba(255, 255, 255, 0.18);
   --shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
@@ -241,9 +243,21 @@ select:focus-visible {
   gap: 1rem;
 }
 
+.calendar-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .calendar-nav #calendarLabel {
   font-weight: 600;
   font-size: 1.05rem;
+}
+
+.today-btn {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
+  white-space: nowrap;
 }
 
 .calendar-grid {
@@ -317,6 +331,10 @@ select:focus-visible {
 
 .calendar-day .day-star.star-past {
   color: var(--star-past);
+}
+
+.calendar-day .day-star.star-complete {
+  color: var(--star-complete);
 }
 
 .calendar-day.placeholder {
