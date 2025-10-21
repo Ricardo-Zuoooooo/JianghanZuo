@@ -210,19 +210,21 @@
 
   <template id="todoItemTemplate">
     <li class="todo-item" draggable="true">
-      <div class="item-main">
-        <label class="item-checkbox">
-          <input type="checkbox" class="todo-done" />
-          <span aria-hidden="true"></span>
-        </label>
-        <div class="item-content">
-          <div class="item-title todo-title"></div>
-          <div class="item-meta todo-meta"></div>
+      <div class="todo-card">
+        <div class="item-main">
+          <label class="item-checkbox">
+            <input type="checkbox" class="todo-done" />
+            <span aria-hidden="true"></span>
+          </label>
+          <div class="item-content">
+            <div class="item-title todo-title"></div>
+            <div class="item-meta todo-meta"></div>
+          </div>
         </div>
-      </div>
-      <div class="item-actions" role="group" aria-label="Todo actions">
-        <button class="icon-action edit" type="button" title="Edit">✎</button>
-        <button class="icon-action delete" type="button" title="Delete">✕</button>
+        <div class="item-actions" role="group" aria-label="Todo actions">
+          <button class="icon-action edit" type="button" title="Edit">✎</button>
+          <button class="icon-action delete" type="button" title="Delete">✕</button>
+        </div>
       </div>
     </li>
   </template>

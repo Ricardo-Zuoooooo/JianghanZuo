@@ -613,25 +613,68 @@ textarea.auto-resize {
   gap: 0.5rem;
 }
 
+
 .todo-item,
 .journal-item {
   background: transparent;
   border: none;
   border-radius: 0;
-  padding: 0.25rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.todo-card {
+  background: rgba(60, 113, 245, 0.08);
+  border-radius: 14px;
+  padding: 0.6rem 0.75rem;
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
   align-items: flex-start;
-  border-bottom: 1px solid var(--border-light);
+  border: 1px solid rgba(60, 113, 245, 0.08);
 }
 
-.todo-item:last-child,
-.journal-item:last-child {
-  border-bottom: none;
+body[data-theme="dark"] .todo-card {
+  background: rgba(60, 113, 245, 0.16);
+  border-color: rgba(60, 113, 245, 0.18);
 }
 
-.todo-item.dragging {
+.todo-card .item-main {
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.todo-card .item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.todo-title {
+  font-weight: 600;
+}
+
+.todo-meta {
+  font-size: 0.85rem;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+.todo-meta .note-text {
+  display: inline-block;
+  word-break: break-word;
+  background: rgba(60, 113, 245, 0.12);
+  padding: 0.35rem 0.55rem;
+  border-radius: 10px;
+  opacity: 1;
+}
+
+.todo-item.dragging .todo-card {
   opacity: 0.6;
 }
 
