@@ -1720,7 +1720,7 @@ function renderCalendar() {
       labelParts.push(`work ${workValue}, training ${trainingValue}`);
     }
 
-    if (hasTodoContent) {
+    if (hasTimes || hasTodoContent) {
       const indicator = document.createElement("span");
       indicator.className = "day-indicator";
 
@@ -1732,29 +1732,34 @@ function renderCalendar() {
         indicator.appendChild(timeHint);
       }
 
-      const star = document.createElement("span");
-      star.className = "day-star";
-      star.textContent = "★";
-      star.setAttribute("aria-hidden", "true");
+      if (hasTodoContent) {
+        const star = document.createElement("span");
+        star.className = "day-star";
+        star.textContent = "★";
+        star.setAttribute("aria-hidden", "true");
 
-      const diffFromToday = getDayDifference(date, todayDate);
-      if (allTodosDone) {
-        star.classList.add("star-complete");
-      } else if (diffFromToday != null) {
-        if (diffFromToday >= 0) {
-          star.classList.add("star-future");
-        } else if (diffFromToday >= -7) {
-          star.classList.add("star-recent");
-        } else {
-          star.classList.add("star-past");
+        const diffFromToday = getDayDifference(date, todayDate);
+        if (allTodosDone) {
+          star.classList.add("star-complete");
+        } else if (diffFromToday != null) {
+          if (diffFromToday >= 0) {
+            star.classList.add("star-future");
+          } else if (diffFromToday >= -7) {
+            star.classList.add("star-recent");
+          } else {
+            star.classList.add("star-past");
+          }
+        }
+
+        indicator.appendChild(star);
+
+        if (allTodosDone) {
+          labelParts.push("todos complete");
         }
       }
 
-      indicator.appendChild(star);
-      cell.appendChild(indicator);
-
-      if (allTodosDone) {
-        labelParts.push("todos complete");
+      if (indicator.childNodes.length > 0) {
+        cell.appendChild(indicator);
       }
     }
 
