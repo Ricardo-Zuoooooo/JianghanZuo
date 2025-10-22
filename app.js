@@ -114,6 +114,23 @@ function ledgerValueToNumber(value) {
   return Number.isFinite(numeric) ? numeric : 0;
 }
 
+function getLedgerFieldLabel(key) {
+  const field = LEDGER_FIELDS.find((item) => item.key === key);
+  return field ? field.label : key;
+}
+
+function updateLedgerInputVisual(input) {
+  if (!input) return;
+  const hasValue = input.value.trim().length > 0;
+  input.dataset.hasValue = hasValue ? "true" : "false";
+}
+
+function roundLedgerAmount(value) {
+  if (!Number.isFinite(value)) return 0;
+  const rounded = Math.round((value + Number.EPSILON) * 100) / 100;
+  return Number.isFinite(rounded) ? rounded : 0;
+}
+
 const ledgerNumberFormatter = new Intl.NumberFormat(undefined, {
   minimumFractionDigits: 0,
   maximumFractionDigits: 2,
@@ -1537,6 +1554,7 @@ function renderLedger() {
     if (input.value !== value) {
       input.value = value;
     }
+    updateLedgerInputVisual(input);
   });
   renderLedgerTotal();
 }
@@ -1562,6 +1580,7 @@ function handleLedgerInputEvent(event) {
   const field = input?.dataset?.ledgerField;
   if (!field) return;
   updateLedgerField(field, input.value);
+  updateLedgerInputVisual(input);
 }
 
 function handleLedgerBlur(event) {
@@ -1573,6 +1592,34 @@ function handleLedgerBlur(event) {
     input.value = trimmed;
   }
   updateLedgerField(field, trimmed);
+  updateLedgerInputVisual(input);
+}
+
+function handleLedgerAdjustClick(event) {
+  const button = event.currentTarget;
+  const field = button?.dataset?.ledgerField;
+  const direction = button?.dataset?.ledgerDirection;
+  if (!field || !direction) return;
+  const label = getLedgerFieldLabel(field);
+  const promptMessage = direction === "add" ? `Enter the amount to add to ${label}` : `Enter the amount to subtract from ${label}`;
+  const raw = window.prompt(promptMessage, "");
+  if (raw == null) return;
+  const normalized = raw.replace(/,/g, "").trim();
+  if (!normalized) return;
+  const numeric = Number(normalized);
+  if (!Number.isFinite(numeric)) {
+    showToast("Please enter a valid number.");
+    return;
+  }
+  if (numeric === 0) {
+    return;
+  }
+  const current = ledgerValueToNumber(state.ledger?.[field]);
+  const nextValue = direction === "add" ? current + numeric : current - numeric;
+  const rounded = roundLedgerAmount(nextValue);
+  const normalizedValue = Math.abs(rounded) === 0 ? 0 : rounded;
+  updateLedgerField(field, String(normalizedValue));
+  renderLedger();
 }
 
 function toggleLedgerVisibility() {
@@ -1615,6 +1662,11 @@ function setupLedgerModule() {
   inputs.forEach((input) => {
     input.addEventListener("input", handleLedgerInputEvent);
     input.addEventListener("blur", handleLedgerBlur);
+    updateLedgerInputVisual(input);
+  });
+  const adjustButtons = document.querySelectorAll("[data-ledger-direction]");
+  adjustButtons.forEach((button) => {
+    button.addEventListener("click", handleLedgerAdjustClick);
   });
 }
 
