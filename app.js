@@ -1696,6 +1696,42 @@ function recordLedgerAdjustment(field, direction, amount) {
   renderLedgerHistory();
 }
 
+function removeLedgerAdjustment(date, id) {
+  if (!date || !id) return;
+  const entries = Array.isArray(state.ledgerHistory?.[date]) ? state.ledgerHistory[date] : null;
+  if (!entries || !entries.length) return;
+  const index = entries.findIndex((entry) => entry.id === id);
+  if (index === -1) return;
+  const entry = entries[index];
+  const field = entry.field;
+  const label = getLedgerFieldLabel(field);
+  const hasContent = Math.abs(entry.delta) > 0;
+  const shouldRemove = !hasContent
+    ? true
+    : window.confirm(`Remove this adjustment for ${label}?`);
+  if (!shouldRemove) {
+    return;
+  }
+  if (hasContent) {
+    const current = ledgerValueToNumber(state.ledger?.[field]);
+    const next = current - entry.delta;
+    const roundedNext = roundLedgerAmount(next);
+    const normalizedValue = Math.abs(roundedNext) === 0 ? 0 : roundedNext;
+    updateLedgerField(field, String(normalizedValue));
+    const input = document.querySelector(`[data-ledger-field="${field}"]`);
+    if (input) {
+      input.value = String(normalizedValue);
+      updateLedgerInputVisual(input);
+    }
+  }
+  entries.splice(index, 1);
+  if (!entries.length) {
+    delete state.ledgerHistory[date];
+  }
+  persistLedgerHistory();
+  renderLedgerHistory();
+}
+
 function formatLedgerHistoryTime(isoString) {
   if (!isoString) return "";
   const date = new Date(isoString);
@@ -1746,9 +1782,24 @@ function renderLedgerHistory() {
     const amount = formatLedgerTotal(Math.abs(entry.delta));
     description.textContent = `${label} ${sign}${amount}`;
     item.appendChild(description);
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "ledger-history-remove";
+    removeBtn.textContent = "✕";
+    removeBtn.setAttribute("aria-label", `Remove adjustment for ${label}`);
+    removeBtn.dataset.ledgerHistoryDate = entry.date;
+    removeBtn.dataset.ledgerHistoryId = entry.id;
+    removeBtn.addEventListener("click", handleLedgerHistoryRemoveClick);
+    item.appendChild(removeBtn);
     fragment.appendChild(item);
   });
   list.appendChild(fragment);
+}
+
+function handleLedgerHistoryRemoveClick(event) {
+  const button = event.currentTarget;
+  const { ledgerHistoryDate: date, ledgerHistoryId: id } = button.dataset;
+  removeLedgerAdjustment(date, id);
 }
 
 function handleLedgerAdjustClick(event) {
@@ -1770,13 +1821,28 @@ function handleLedgerAdjustClick(event) {
   if (numeric === 0) {
     return;
   }
-  const current = ledgerValueToNumber(state.ledger?.[field]);
-  const nextValue = direction === "add" ? current + numeric : current - numeric;
+  const input = document.querySelector(`[data-ledger-field="${field}"]`);
+  let current = ledgerValueToNumber(state.ledger?.[field]);
+  if (input) {
+    const liveValue = ledgerValueToNumber(input.value);
+    if (liveValue !== current) {
+      current = liveValue;
+    }
+  }
+  const amount = roundLedgerAmount(Math.abs(numeric));
+  if (amount === 0) {
+    return;
+  }
+  const nextValue = direction === "add" ? current + amount : current - amount;
   const rounded = roundLedgerAmount(nextValue);
   const normalizedValue = Math.abs(rounded) === 0 ? 0 : rounded;
   updateLedgerField(field, String(normalizedValue));
-  renderLedger();
-  recordLedgerAdjustment(field, direction, Math.abs(numeric));
+  if (input) {
+    input.value = String(normalizedValue);
+    updateLedgerInputVisual(input);
+  }
+  renderLedgerTotal();
+  recordLedgerAdjustment(field, direction, amount);
 }
 
 function toggleLedgerVisibility() {
