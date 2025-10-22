@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   logs: "dm_labLogs",
   ratings: "dm_dayRatings",
   ledger: "dm_ledger",
+  ledgerHistory: "dm_ledgerHistory",
 };
 
 const TIMEZONE_OPTIONS = [
@@ -45,6 +46,7 @@ const state = {
   labLogs: [],
   dayRatings: [],
   ledger: { ...DEFAULT_LEDGER },
+  ledgerHistory: {},
   settings: { ...DEFAULT_SETTINGS },
   selectedDate: null,
   calendarAnchor: null,
@@ -104,6 +106,59 @@ function normalizeLedger(raw) {
     }
   }
   return base;
+}
+
+function normalizeLedgerHistory(raw) {
+  const history = {};
+  if (!raw || typeof raw !== "object") {
+    return history;
+  }
+  Object.entries(raw).forEach(([date, entries]) => {
+    if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return;
+    }
+    if (!Array.isArray(entries)) {
+      return;
+    }
+    const normalizedEntries = entries
+      .map((entry) => {
+        if (!entry || typeof entry !== "object") return null;
+        const field = LEDGER_FIELDS.find((item) => item.key === entry.field)?.key;
+        if (!field) return null;
+        const baseDirection = entry.direction === "subtract" ? "subtract" : "add";
+        const numericSource =
+          typeof entry.delta === "number"
+            ? entry.delta
+            : typeof entry.amount === "number"
+            ? entry.amount * (baseDirection === "add" ? 1 : -1)
+            : typeof entry.value === "number"
+            ? entry.value
+            : Number(entry.delta);
+        const rounded = Number.isFinite(numericSource) ? roundLedgerAmount(numericSource) : 0;
+        if (rounded === 0) return null;
+        const direction = rounded < 0 ? "subtract" : rounded > 0 ? "add" : baseDirection;
+        const delta = direction === "subtract" ? -Math.abs(rounded) : Math.abs(rounded);
+        const createdAt =
+          typeof entry.createdAt === "string" && !Number.isNaN(new Date(entry.createdAt).getTime())
+            ? entry.createdAt
+            : new Date().toISOString();
+        const id = typeof entry.id === "string" && entry.id ? entry.id : crypto.randomUUID();
+        return {
+          id,
+          date,
+          field,
+          direction,
+          delta,
+          createdAt,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    if (normalizedEntries.length) {
+      history[date] = normalizedEntries;
+    }
+  });
+  return history;
 }
 
 function ledgerValueToNumber(value) {
@@ -779,12 +834,14 @@ function loadState() {
     const logsRaw = localStorage.getItem(STORAGE_KEYS.logs);
     const ratingsRaw = localStorage.getItem(STORAGE_KEYS.ratings);
     const ledgerRaw = localStorage.getItem(STORAGE_KEYS.ledger);
+    const ledgerHistoryRaw = localStorage.getItem(STORAGE_KEYS.ledgerHistory);
     if (journalRaw) state.journal = JSON.parse(journalRaw);
     if (todosRaw) state.todos = JSON.parse(todosRaw);
     if (settingsRaw) state.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(settingsRaw) };
     if (logsRaw) state.labLogs = JSON.parse(logsRaw);
     if (ratingsRaw) state.dayRatings = JSON.parse(ratingsRaw);
     if (ledgerRaw) state.ledger = JSON.parse(ledgerRaw);
+    if (ledgerHistoryRaw) state.ledgerHistory = JSON.parse(ledgerHistoryRaw);
   } catch (error) {
     console.error("Failed to load local state", error);
   }
@@ -799,6 +856,7 @@ function loadState() {
     .map((entry) => normalizeDayRating(entry))
     .filter((entry) => entry && !isDayRatingEmpty(entry));
   state.ledger = normalizeLedger(state.ledger);
+  state.ledgerHistory = normalizeLedgerHistory(state.ledgerHistory);
   if (!TIMEZONE_OPTIONS.some((opt) => opt.value === state.settings.timeZone)) {
     state.settings.timeZone = DEFAULT_SETTINGS.timeZone;
   }
@@ -821,6 +879,7 @@ function saveAll() {
   persist(STORAGE_KEYS.logs, state.labLogs);
   persist(STORAGE_KEYS.ratings, state.dayRatings);
   persist(STORAGE_KEYS.ledger, state.ledger);
+  persist(STORAGE_KEYS.ledgerHistory, state.ledgerHistory);
 }
 
 function saveSettings() {
@@ -884,6 +943,7 @@ function setTimeZone(value) {
   renderTodos();
   renderJournal();
   renderLogs();
+  renderLedgerHistory();
   refreshVisibleStepTimestamps(document.getElementById("logForm"));
   saveSettings();
 }
@@ -988,6 +1048,7 @@ function setSelectedDate(date) {
   renderJournal();
   renderLogs();
   renderCalendar();
+  renderLedgerHistory();
   saveSettings();
 }
 
@@ -1557,6 +1618,15 @@ function renderLedger() {
     updateLedgerInputVisual(input);
   });
   renderLedgerTotal();
+  renderLedgerHistory();
+}
+
+function setLedgerToggleIcon(toggle, expanded) {
+  if (!toggle) return;
+  const icon = toggle.querySelector("[data-ledger-eye]");
+  if (icon) {
+    icon.textContent = expanded ? "—" : "▾";
+  }
 }
 
 function saveLedger() {
@@ -1595,6 +1665,92 @@ function handleLedgerBlur(event) {
   updateLedgerInputVisual(input);
 }
 
+function getActiveLedgerDate() {
+  return state.selectedDate || nowInTimeZone().date;
+}
+
+function persistLedgerHistory() {
+  persist(STORAGE_KEYS.ledgerHistory, state.ledgerHistory);
+}
+
+function recordLedgerAdjustment(field, direction, amount) {
+  const date = getActiveLedgerDate();
+  if (!date || !LEDGER_FIELDS.some((item) => item.key === field)) return;
+  const absAmount = Math.abs(amount);
+  const roundedAmount = roundLedgerAmount(absAmount);
+  if (roundedAmount === 0) return;
+  const delta = direction === "subtract" ? -roundedAmount : roundedAmount;
+  if (!state.ledgerHistory[date]) {
+    state.ledgerHistory[date] = [];
+  }
+  const entry = {
+    id: crypto.randomUUID(),
+    date,
+    field,
+    direction,
+    delta,
+    createdAt: new Date().toISOString(),
+  };
+  state.ledgerHistory[date].push(entry);
+  persistLedgerHistory();
+  renderLedgerHistory();
+}
+
+function formatLedgerHistoryTime(isoString) {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: getTimeZone(),
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+function renderLedgerHistory() {
+  const list = document.getElementById("ledgerHistory");
+  const emptyMessage = document.getElementById("ledgerHistoryEmpty");
+  if (!list) return;
+  const date = getActiveLedgerDate();
+  const entries = Array.isArray(state.ledgerHistory?.[date])
+    ? state.ledgerHistory[date]
+        .slice()
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    : [];
+  list.innerHTML = "";
+  if (!entries.length) {
+    list.hidden = true;
+    if (emptyMessage) {
+      emptyMessage.hidden = false;
+    }
+    return;
+  }
+  list.hidden = false;
+  if (emptyMessage) {
+    emptyMessage.hidden = true;
+  }
+  const fragment = document.createDocumentFragment();
+  entries.forEach((entry) => {
+    const item = document.createElement("div");
+    item.className = "ledger-history-item";
+    item.setAttribute("role", "listitem");
+    const time = document.createElement("span");
+    time.className = "ledger-history-time";
+    time.textContent = formatLedgerHistoryTime(entry.createdAt);
+    item.appendChild(time);
+    const description = document.createElement("span");
+    description.className = "ledger-history-description";
+    const label = getLedgerFieldLabel(entry.field);
+    const sign = entry.direction === "subtract" ? "-" : "+";
+    const amount = formatLedgerTotal(Math.abs(entry.delta));
+    description.textContent = `${label} ${sign}${amount}`;
+    item.appendChild(description);
+    fragment.appendChild(item);
+  });
+  list.appendChild(fragment);
+}
+
 function handleLedgerAdjustClick(event) {
   const button = event.currentTarget;
   const field = button?.dataset?.ledgerField;
@@ -1620,6 +1776,7 @@ function handleLedgerAdjustClick(event) {
   const normalizedValue = Math.abs(rounded) === 0 ? 0 : rounded;
   updateLedgerField(field, String(normalizedValue));
   renderLedger();
+  recordLedgerAdjustment(field, direction, Math.abs(numeric));
 }
 
 function toggleLedgerVisibility() {
@@ -1634,10 +1791,7 @@ function toggleLedgerVisibility() {
   toggle.setAttribute("aria-label", expanded ? "Hide ledger" : "Show ledger");
   toggle.setAttribute("title", expanded ? "Hide ledger" : "Show ledger");
   toggle.classList.toggle("collapsed", !expanded);
-  const eye = toggle.querySelector("[data-ledger-eye]");
-  if (eye) {
-    eye.textContent = expanded ? "👁" : "🙈";
-  }
+  setLedgerToggleIcon(toggle, expanded);
 }
 
 function setupLedgerModule() {
@@ -1653,10 +1807,7 @@ function setupLedgerModule() {
     toggle.setAttribute("title", expanded ? "Hide ledger" : "Show ledger");
     toggle.classList.toggle("collapsed", !expanded);
     body.classList.toggle("collapsed", body.hidden);
-    const eye = toggle.querySelector("[data-ledger-eye]");
-    if (eye) {
-      eye.textContent = expanded ? "👁" : "🙈";
-    }
+    setLedgerToggleIcon(toggle, expanded);
   }
   const inputs = document.querySelectorAll("[data-ledger-field]");
   inputs.forEach((input) => {

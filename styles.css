@@ -716,6 +716,55 @@ body[data-theme="dark"] .ledger-toggle:focus-visible {
   transform: scale(0.96);
 }
 
+.ledger-history {
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ledger-history-heading {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ledger-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ledger-history-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.ledger-history-time {
+  font-variant-numeric: tabular-nums;
+  min-width: 3.5rem;
+}
+
+.ledger-history-description {
+  flex: 1;
+  text-align: right;
+  color: var(--text);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.ledger-history-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .form-row {
   display: flex;
   gap: 0.75rem;
