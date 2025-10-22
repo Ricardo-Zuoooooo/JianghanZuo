@@ -21,7 +21,8 @@ const LEDGER_FIELDS = [
   { key: "alipay", label: "Alipay" },
   { key: "wechat", label: "WeChat" },
   { key: "bankCn", label: "Bank Account (cn)" },
-  { key: "bankUkDebt", label: "Bank Account (uk) Debt" },
+  { key: "debt", label: "Debt" },
+  { key: "bankUk", label: "Bank Account (uk)" },
 ];
 
 const LEDGER_TOTAL_KEYS = ["alipay", "wechat", "bankCn"];
@@ -94,6 +95,13 @@ function normalizeLedger(raw) {
         base[key] = value == null ? "" : String(value);
       }
     });
+
+    if (Object.prototype.hasOwnProperty.call(raw, "bankUkDebt")) {
+      const legacyDebt = raw.bankUkDebt == null ? "" : String(raw.bankUkDebt);
+      if (!base.debt && legacyDebt) {
+        base.debt = legacyDebt;
+      }
+    }
   }
   return base;
 }
@@ -1573,11 +1581,16 @@ function toggleLedgerVisibility() {
   if (!body || !toggle) return;
   const willHide = !body.hidden;
   body.hidden = willHide;
+  body.classList.toggle("collapsed", willHide);
   const expanded = !body.hidden;
   toggle.setAttribute("aria-expanded", String(expanded));
   toggle.setAttribute("aria-label", expanded ? "Hide ledger" : "Show ledger");
   toggle.setAttribute("title", expanded ? "Hide ledger" : "Show ledger");
   toggle.classList.toggle("collapsed", !expanded);
+  const eye = toggle.querySelector("[data-ledger-eye]");
+  if (eye) {
+    eye.textContent = expanded ? "👁" : "🙈";
+  }
 }
 
 function setupLedgerModule() {
@@ -1592,6 +1605,11 @@ function setupLedgerModule() {
     toggle.setAttribute("aria-label", expanded ? "Hide ledger" : "Show ledger");
     toggle.setAttribute("title", expanded ? "Hide ledger" : "Show ledger");
     toggle.classList.toggle("collapsed", !expanded);
+    body.classList.toggle("collapsed", body.hidden);
+    const eye = toggle.querySelector("[data-ledger-eye]");
+    if (eye) {
+      eye.textContent = expanded ? "👁" : "🙈";
+    }
   }
   const inputs = document.querySelectorAll("[data-ledger-field]");
   inputs.forEach((input) => {

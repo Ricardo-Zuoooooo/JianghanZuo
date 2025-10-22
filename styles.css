@@ -601,6 +601,10 @@ body[data-theme="dark"] .ledger-toggle:focus-visible {
   gap: 1rem;
 }
 
+.ledger-body.collapsed {
+  display: none;
+}
+
 .ledger-total {
   display: flex;
   justify-content: space-between;
@@ -626,23 +630,34 @@ body[data-theme="dark"] .ledger-toggle:focus-visible {
 
 .ledger-field {
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .ledger-field label {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.ledger-field label::after {
+  content: ":";
+  margin-inline: 0.3rem 0.4rem;
+  color: inherit;
 }
 
 .ledger-input {
+  flex: 1;
+  min-width: 0;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
-  padding: 0.65rem 0.75rem;
+  padding: 0.5rem 0.65rem;
   color: inherit;
   font-size: 1rem;
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .ledger-input:focus-visible {

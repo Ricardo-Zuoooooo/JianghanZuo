@@ -158,7 +158,7 @@
               aria-label="Hide ledger"
               title="Hide ledger"
             >
-              <span aria-hidden="true">👁</span>
+              <span aria-hidden="true" data-ledger-eye>👁</span>
             </button>
           </div>
         </div>
@@ -205,14 +205,26 @@
               />
             </div>
             <div class="ledger-field">
-              <label for="ledgerBankUkDebt">Bank Account (uk) Debt</label>
+              <label for="ledgerDebt">Debt</label>
               <input
-                id="ledgerBankUkDebt"
+                id="ledgerDebt"
                 class="ledger-input"
                 type="number"
                 step="0.01"
                 inputmode="decimal"
-                data-ledger-field="bankUkDebt"
+                data-ledger-field="debt"
+                placeholder="0"
+              />
+            </div>
+            <div class="ledger-field">
+              <label for="ledgerBankUk">Bank Account (uk)</label>
+              <input
+                id="ledgerBankUk"
+                class="ledger-input"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                data-ledger-field="bankUk"
                 placeholder="0"
               />
             </div>
