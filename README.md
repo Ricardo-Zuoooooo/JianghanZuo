@@ -3,6 +3,32 @@
 
 # Getting Started
 
+## Daily Manager single-page app usage
+
+The `index.html`, `styles.css`, and `app.js` files in the repository root make up the Daily Manager front-end. There is no backend or build step required. To run it locally:
+
+1. Clone or download this repository so the three files stay together (keeping the repository structure is sufficient).
+2. Open `index.html` in your browser:
+   - Double-click `index.html` in your file browser, or
+   - Right-click and choose “Open with browser”, or
+   - Start an optional temporary static server:
+     ```bash
+     python -m http.server 8000
+     ```
+     Then visit http://localhost:8000/index.html.
+3. The app starts in the Europe/London timezone and persists data to `localStorage` using the keys `dm_journal`, `dm_todos`, `dm_labLogs`, `dm_dayRatings`, `dm_ledger`, `dm_ledgerHistory`, `dm_workspace`, and `dm_settings`. Click the timezone label below the title to switch between Europe/London and China. Refreshing the page keeps your data intact.
+4. Track daily todos and capture a "Rate my day" score (0–10) with work time, training time, and a commit summary beside the selected date. Research logs capture an experiment title, overview, code notes or URLs, detailed auto time-stamped steps, and optional results independent of the calendar view.
+5. Capture quick notes in the collapsible left sidebar—open it with the ☰ button, jot down what you're working on for your project, fitness, or money management, and the text autosaves to `dm_workspace` without affecting the main layout.
+6. Record balances in the Ledger panel under the todo list. Alipay, WeChat, and Bank Account (cn) values roll into the Total row automatically, while Bank Account (uk) Debt stays independent of the daily calendar. Use the ＋/－ shortcuts beside each account to log income or expenses without touching the base value—each adjustment is tracked per day in the history list beneath the ledger, and you can remove an entry later if it was added by mistake.
+7. Use the Back to today button above the calendar to jump to the current day. Calendar stars turn green when every todo for that date is complete; otherwise they stay yellow/orange/red based on how far the day is from today and display any recorded work/training times beside the star.
+8. To archive or migrate your information, pick a date range in the export card at the bottom of the page and download TXT files for todos or research logs.
+
+## Workflow note
+
+Changes in this workspace are prepared on the current feature branch and accompanied by a pull request. If you want master to stay current, merge the generated PR after review so the main branch reflects the latest Daily Manager updates.
+
+> If you only need the Jekyll site, continue with the existing “Running locally” section below.
+
 1. Register a GitHub account if you don't have one and confirm your e-mail (required!)
 1. Click the "Use this template" button in the top right.
 1. On the "New repository" page, enter your repository name as "[your GitHub username].github.io", which will also be your website's URL.
