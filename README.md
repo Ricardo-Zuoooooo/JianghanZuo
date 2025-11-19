@@ -23,6 +23,10 @@ The `index.html`, `styles.css`, and `app.js` files in the repository root make u
 7. Use the Back to today button above the calendar to jump to the current day. Calendar stars turn green when every todo for that date is complete; otherwise they stay yellow/orange/red based on how far the day is from today and display any recorded work/training times beside the star.
 8. To archive or migrate your information, pick a date range in the export card at the bottom of the page and download TXT files for todos or research logs.
 
+
+## Workflow note
+
+Changes in this workspace are prepared on the current feature branch and accompanied by a pull request. If you want master to stay current, merge the generated PR after review so the main branch reflects the latest Daily Manager updates.
 > If you only need the Jekyll site, continue with the existing “Running locally” section below.
 
 1. Register a GitHub account if you don't have one and confirm your e-mail (required!)
