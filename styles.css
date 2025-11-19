@@ -19,8 +19,7 @@
   --shadow: 0 12px 30px rgba(41, 51, 73, 0.1);
   --focus: 0 0 0 3px rgba(60, 113, 245, 0.4);
   --font-family: "Times New Roman", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", serif;
-  --workspace-sidebar: 280px;
-  --workspace-rail: 64px;
+  --sidebar-width: 280px;
 }
 
 body[data-theme="dark"] {
@@ -51,6 +50,8 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .sr-only {
@@ -82,41 +83,41 @@ a {
   gap: 1rem;
 }
 
-.app-shell {
-  min-height: 100vh;
-}
-
-.workspace-rail {
+.sidebar-toggle {
   position: fixed;
-  left: 0;
-  top: 0;
-  width: var(--workspace-rail);
-  height: 100vh;
-  background: var(--surface);
-  border-inline-end: 1px solid var(--border);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 1rem;
-  z-index: 20;
-}
-
-.rail-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  inset-inline-start: 1rem;
+  top: 1rem;
+  z-index: 30;
   border: 1px solid var(--border);
   background: var(--surface);
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  font-size: 1.1rem;
   cursor: pointer;
   box-shadow: var(--shadow);
 }
 
-.workspace-sidebar {
+.sidebar-scrim {
   position: fixed;
-  left: var(--workspace-rail);
-  top: 0;
-  width: var(--workspace-sidebar);
-  height: 100vh;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 24;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.sidebar-scrim.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidebar {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--sidebar-width);
   background: var(--surface);
   box-shadow: var(--shadow);
   border-inline-end: 1px solid var(--border);
@@ -124,18 +125,13 @@ a {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  transform: translateX(-100%);
+  transform: translateX(-105%);
   transition: transform 0.25s ease;
-  z-index: 21;
+  z-index: 25;
 }
 
-.app-shell.is-workspace-open .workspace-sidebar {
+.sidebar:not(.collapsed) {
   transform: translateX(0);
-}
-
-.main-content {
-  margin-left: var(--workspace-rail);
-  min-height: 100vh;
 }
 
 .sidebar-header {
@@ -181,7 +177,7 @@ a {
   font-size: 0.95rem;
 }
 
-.workspace-sidebar textarea {
+.sidebar textarea {
   border: none;
   background: transparent;
   padding: 0;
@@ -192,7 +188,13 @@ a {
 
 @media (max-width: 900px) {
   :root {
-    --workspace-sidebar: min(86vw, 320px);
+    --sidebar-width: 86vw;
+  }
+  .sidebar {
+    padding-top: 4.5rem;
+  }
+  .sidebar-toggle {
+    top: 0.75rem;
   }
 }
 

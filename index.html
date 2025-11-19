@@ -7,69 +7,57 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="workspace-rail" aria-label="Workspace rail">
-      <button
-        id="workspaceOpen"
-        class="rail-btn"
-        type="button"
-        aria-label="Open workspace"
-        aria-controls="workspaceSidebar"
-        aria-expanded="false"
-      >
-        ☰
-      </button>
-    </aside>
-
-    <aside id="workspaceSidebar" class="workspace-sidebar" aria-label="Workspace">
-      <div class="sidebar-header">
-        <span class="sidebar-title">Workspace</span>
-        <button
-          id="workspaceClose"
-          class="sidebar-close"
-          type="button"
-          aria-label="Collapse workspace"
-          aria-expanded="true"
-        >
-          ⟨
-        </button>
+  <button
+    id="sidebarToggle"
+    class="sidebar-toggle"
+    type="button"
+    aria-label="Toggle workspace sidebar"
+    aria-expanded="false"
+    aria-controls="workspaceSidebar"
+  >
+    ☰
+  </button>
+  <div id="sidebarScrim" class="sidebar-scrim" hidden></div>
+  <aside id="workspaceSidebar" class="sidebar collapsed" aria-label="Workspace">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Workspace</span>
+      <button id="sidebarClose" class="sidebar-close" type="button" aria-label="Collapse sidebar">⟨</button>
+    </div>
+    <div class="sidebar-body">
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">Project</div>
+        <textarea
+          class="auto-resize"
+          rows="1"
+          placeholder="What are you building?"
+          aria-label="Project notes"
+          data-sidebar-field="project"
+        ></textarea>
       </div>
-      <div class="sidebar-body">
-        <div class="sidebar-group">
-          <div class="sidebar-group-title">Project</div>
-          <textarea
-            class="auto-resize"
-            rows="1"
-            placeholder="What are you building?"
-            aria-label="Project notes"
-            data-sidebar-field="project"
-          ></textarea>
-        </div>
-        <div class="sidebar-group">
-          <div class="sidebar-group-title">Fitness</div>
-          <textarea
-            class="auto-resize"
-            rows="1"
-            placeholder="Today's training focus"
-            aria-label="Fitness notes"
-            data-sidebar-field="fitness"
-          ></textarea>
-        </div>
-        <div class="sidebar-group">
-          <div class="sidebar-group-title">Money management</div>
-          <textarea
-            class="auto-resize"
-            rows="1"
-            placeholder="Budget or savings plan"
-            aria-label="Money management notes"
-            data-sidebar-field="money"
-          ></textarea>
-        </div>
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">Fitness</div>
+        <textarea
+          class="auto-resize"
+          rows="1"
+          placeholder="Today's training focus"
+          aria-label="Fitness notes"
+          data-sidebar-field="fitness"
+        ></textarea>
       </div>
-    </aside>
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">Money management</div>
+        <textarea
+          class="auto-resize"
+          rows="1"
+          placeholder="Budget or savings plan"
+          aria-label="Money management notes"
+          data-sidebar-field="money"
+        ></textarea>
+      </div>
+    </div>
+  </aside>
 
-    <main class="main-content">
-      <header class="app-header">
+  <header class="app-header">
     <div class="header-left">
       <h1>Daily Manager</h1>
       <div class="subtitle timezone-picker" id="timezonePicker">
@@ -96,7 +84,7 @@
     </div>
   </header>
 
-  <section class="layout">
+  <main class="layout">
     <section class="calendar-panel" aria-label="Calendar">
       <div class="calendar-nav">
         <div class="calendar-nav-group">
@@ -390,7 +378,7 @@
       </section>
 
     </section>
-  </section>
+  </main>
 
   <section class="log-board" aria-labelledby="logHeading">
     <div class="log-board-inner">
@@ -492,9 +480,6 @@
   </template>
 
   <div id="toast" role="status" aria-live="assertive"></div>
-
-    </main>
-  </div>
 
   <script src="app.js" defer></script>
 </body>

@@ -673,34 +673,41 @@ function updateWorkspaceField(key, value) {
   persist(STORAGE_KEYS.workspace, state.workspace);
 }
 
-function setWorkspaceOpen(open) {
-  const shell = document.querySelector(".app-shell");
-  const openBtn = document.getElementById("workspaceOpen");
-  const closeBtn = document.getElementById("workspaceClose");
-  if (!shell || !openBtn) return;
-  shell.classList.toggle("is-workspace-open", Boolean(open));
-  openBtn.setAttribute("aria-expanded", open ? "true" : "false");
-  closeBtn?.setAttribute("aria-expanded", open ? "true" : "false");
+function setSidebarOpen(open) {
+  const sidebar = document.getElementById("workspaceSidebar");
+  const toggle = document.getElementById("sidebarToggle");
+  const scrim = document.getElementById("sidebarScrim");
+  const closeBtn = document.getElementById("sidebarClose");
+  if (!sidebar || !toggle) return;
+  sidebar.classList.toggle("collapsed", !open);
+  toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  toggle.setAttribute("aria-label", open ? "Collapse workspace sidebar" : "Expand workspace sidebar");
+  if (closeBtn) closeBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  if (scrim) {
+    scrim.hidden = !open;
+    scrim.classList.toggle("visible", open);
+  }
 }
 
-function toggleWorkspace(force) {
-  const shell = document.querySelector(".app-shell");
-  const isOpen = shell?.classList.contains("is-workspace-open");
-  const next = typeof force === "boolean" ? force : !isOpen;
-  setWorkspaceOpen(next);
+function toggleSidebar(force) {
+  const sidebar = document.getElementById("workspaceSidebar");
+  const shouldOpen = typeof force === "boolean" ? force : sidebar?.classList.contains("collapsed");
+  setSidebarOpen(shouldOpen);
 }
 
 function setupWorkspaceSidebar() {
   const sidebar = document.getElementById("workspaceSidebar");
-  const openBtn = document.getElementById("workspaceOpen");
-  const closeBtn = document.getElementById("workspaceClose");
-  if (!sidebar || !openBtn) return;
-  openBtn.addEventListener("click", () => toggleWorkspace());
-  closeBtn?.addEventListener("click", () => toggleWorkspace(false));
+  const toggle = document.getElementById("sidebarToggle");
+  const closeBtn = document.getElementById("sidebarClose");
+  const scrim = document.getElementById("sidebarScrim");
+  if (!sidebar || !toggle) return;
+  toggle.addEventListener("click", () => toggleSidebar());
+  closeBtn?.addEventListener("click", () => toggleSidebar(false));
+  scrim?.addEventListener("click", () => toggleSidebar(false));
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && document.querySelector(".app-shell")?.classList.contains("is-workspace-open")) {
-      toggleWorkspace(false);
-      openBtn.focus();
+    if (event.key === "Escape" && !sidebar.classList.contains("collapsed")) {
+      toggleSidebar(false);
+      toggle.focus();
     }
   });
   sidebar.querySelectorAll("[data-sidebar-field]").forEach((field) => {
@@ -711,7 +718,7 @@ function setupWorkspaceSidebar() {
   });
   renderWorkspaceSidebar();
   refreshAutosizeWithin(sidebar);
-  setWorkspaceOpen(false);
+  toggleSidebar(false);
 }
 
 function confirmRemovalIfFilled(inputs, message) {
