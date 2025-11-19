@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <button
+    id="sidebarToggle"
+    class="sidebar-toggle"
+    type="button"
+    aria-label="Toggle workspace sidebar"
+    aria-expanded="false"
+    aria-controls="workspaceSidebar"
+  >
+    ☰
+  </button>
+  <div id="sidebarScrim" class="sidebar-scrim" hidden></div>
+  <aside id="workspaceSidebar" class="sidebar collapsed" aria-label="Workspace">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Workspace</span>
+      <button id="sidebarClose" class="sidebar-close" type="button" aria-label="Collapse sidebar">⟨</button>
+    </div>
+    <div class="sidebar-body">
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">Project</div>
+        <textarea
+          class="auto-resize"
+          rows="1"
+          placeholder="What are you building?"
+          aria-label="Project notes"
+          data-sidebar-field="project"
+        ></textarea>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">Fitness</div>
+        <textarea
+          class="auto-resize"
+          rows="1"
+          placeholder="Today's training focus"
+          aria-label="Fitness notes"
+          data-sidebar-field="fitness"
+        ></textarea>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">Money management</div>
+        <textarea
+          class="auto-resize"
+          rows="1"
+          placeholder="Budget or savings plan"
+          aria-label="Money management notes"
+          data-sidebar-field="money"
+        ></textarea>
+      </div>
+    </div>
+  </aside>
+
+  <header class="app-header">
+    <div class="header-left">
+      <h1>Daily Manager</h1>
+      <div class="subtitle timezone-picker" id="timezonePicker">
+        <button
+          id="timezoneButton"
+          type="button"
+          class="timezone-btn"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          aria-controls="timezoneMenu"
+        >
+          Europe/London
+        </button>
+        <ul id="timezoneMenu" class="timezone-menu" role="listbox" hidden>
+          <li role="option" data-value="Europe/London" tabindex="0">Europe/London</li>
+          <li role="option" data-value="Asia/Shanghai" tabindex="0">China</li>
+        </ul>
+      </div>
+    </div>
+    <div class="header-right">
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle theme" title="Toggle theme (T)">
+        <span class="icon">🌗</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="calendar-panel" aria-label="Calendar">
+      <div class="calendar-nav">
+        <div class="calendar-nav-group">
+          <button id="prevPeriod" class="btn" type="button" aria-label="Previous month">◀</button>
+          <button
+            id="todayButton"
+            class="btn ghost today-btn"
+            type="button"
+            aria-label="Back to today"
+          >
+            Back to today
+          </button>
+        </div>
+        <div id="calendarLabel" aria-live="polite"></div>
+        <div class="calendar-nav-group">
+          <button id="nextPeriod" class="btn" type="button" aria-label="Next month">▶</button>
+        </div>
+      </div>
+      <div id="calendarGrid" class="calendar-grid" role="grid"></div>
+    </section>
+
+    <section class="day-panel" aria-label="Selected day details">
+      <div class="day-header">
+        <div class="day-title">
+          <h2 id="selectedDateLabel"></h2>
+        </div>
+        <section id="dayRatingModule" class="day-rating-inline" aria-label="Rate my day">
+          <div class="rating-line">
+            <div class="rating-field" data-field="workTime">
+              <span id="dayWorkTimeLabel" class="rating-label">Working time:</span>
+              <button
+                id="dayWorkTime"
+                type="button"
+                class="rating-select"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                aria-labelledby="dayWorkTimeLabel"
+                data-field="workTime"
+              >
+                --
+              </button>
+              <ul
+                id="dayWorkTimeMenu"
+                class="rating-menu"
+                role="listbox"
+                aria-labelledby="dayWorkTimeLabel"
+                data-field="workTime"
+                hidden
+              ></ul>
+            </div>
+            <div class="rating-field" data-field="trainingTime">
+              <span id="dayTrainingTimeLabel" class="rating-label">Training time:</span>
+              <button
+                id="dayTrainingTime"
+                type="button"
+                class="rating-select"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                aria-labelledby="dayTrainingTimeLabel"
+                data-field="trainingTime"
+              >
+                --
+              </button>
+              <ul
+                id="dayTrainingTimeMenu"
+                class="rating-menu"
+                role="listbox"
+                aria-labelledby="dayTrainingTimeLabel"
+                data-field="trainingTime"
+                hidden
+              ></ul>
+            </div>
+          </div>
+          <div class="rating-commit-line">
+            <label for="dayCommitNotes" class="sr-only">Commit</label>
+            <textarea
+              id="dayCommitNotes"
+              class="auto-resize"
+              rows="1"
+              placeholder="commit"
+              aria-label="Commit"
+            ></textarea>
+          </div>
+        </section>
+      </div>
+
+      <section class="todo-section" aria-labelledby="todoHeading">
+        <div class="section-header simple">
+          <h3 id="todoHeading">Todos</h3>
+          <button id="newTodoBtn" class="circle-btn" type="button" title="New todo (N)" aria-label="New todo">＋</button>
+        </div>
+        <form id="todoForm" class="card inline-form" aria-label="Create or edit todo" hidden>
+          <div class="form-row">
+            <input id="todoTitle" name="title" type="text" placeholder="Todo title" required />
+          </div>
+          <textarea
+            id="todoNote"
+            class="auto-resize"
+            name="note"
+            rows="1"
+            placeholder="Notes (Enter to save, Esc to cancel)"
+          ></textarea>
+          <div class="form-actions">
+            <button type="submit" class="btn primary">Save Todo</button>
+            <button type="button" id="cancelTodo" class="btn ghost">Cancel</button>
+          </div>
+        </form>
+        <ul id="todoList" class="todo-list" aria-live="polite"></ul>
+      </section>
+
+      <section class="ledger-section" aria-labelledby="ledgerHeading">
+        <div class="section-header simple ledger-header">
+          <div class="ledger-title">
+            <h3 id="ledgerHeading">Ledger</h3>
+            <button
+              id="toggleLedger"
+              class="ledger-toggle"
+              type="button"
+              aria-controls="ledgerBody"
+              aria-expanded="true"
+              aria-label="Hide ledger"
+              title="Hide ledger"
+            >
+              <span aria-hidden="true" data-ledger-eye>—</span>
+            </button>
+          </div>
+        </div>
+        <div id="ledgerBody" class="ledger-body card" role="group" aria-labelledby="ledgerHeading">
+          <div class="ledger-total">
+            <span>Total</span>
+            <output id="ledgerTotal" aria-live="polite">0</output>
+          </div>
+          <div class="ledger-grid">
+            <div class="ledger-field">
+              <label for="ledgerAlipay">Alipay</label>
+              <input
+                id="ledgerAlipay"
+                class="ledger-input"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                data-ledger-field="alipay"
+                placeholder="0"
+              />
+              <div class="ledger-buttons" role="group" aria-label="Adjust Alipay balance">
+                <button
+                  class="ledger-adjust"
+                  type="button"
+                  data-ledger-field="alipay"
+                  data-ledger-direction="add"
+                  aria-label="Increase Alipay balance"
+                  title="Increase"
+                >＋</button>
+                <button
+                  class="ledger-adjust"
+                  type="button"
+                  data-ledger-field="alipay"
+                  data-ledger-direction="subtract"
+                  aria-label="Decrease Alipay balance"
+                  title="Decrease"
+                >－</button>
+              </div>
+            </div>
+            <div class="ledger-field">
+              <label for="ledgerWeChat">WeChat</label>
+              <input
+                id="ledgerWeChat"
+                class="ledger-input"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                data-ledger-field="wechat"
+                placeholder="0"
+              />
+              <div class="ledger-buttons" role="group" aria-label="Adjust WeChat balance">
+                <button
+                  class="ledger-adjust"
+                  type="button"
+                  data-ledger-field="wechat"
+                  data-ledger-direction="add"
+                  aria-label="Increase WeChat balance"
+                  title="Increase"
+                >＋</button>
+                <button
+                  class="ledger-adjust"
+                  type="button"
+                  data-ledger-field="wechat"
+                  data-ledger-direction="subtract"
+                  aria-label="Decrease WeChat balance"
+                  title="Decrease"
+                >－</button>
+              </div>
+            </div>
+            <div class="ledger-field">
+              <label for="ledgerBankCn">Bank Account (cn)</label>
+              <input
+                id="ledgerBankCn"
+                class="ledger-input"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                data-ledger-field="bankCn"
+                placeholder="0"
+              />
+              <div class="ledger-buttons" role="group" aria-label="Adjust Bank Account (cn) balance">
+                <button
+                  class="ledger-adjust"
+                  type="button"
+                  data-ledger-field="bankCn"
+                  data-ledger-direction="add"
+                  aria-label="Increase Bank Account (cn) balance"
+                  title="Increase"
+                >＋</button>
+                <button
+                  class="ledger-adjust"
+                  type="button"
+                  data-ledger-field="bankCn"
+                  data-ledger-direction="subtract"
+                  aria-label="Decrease Bank Account (cn) balance"
+                  title="Decrease"
+                >－</button>
+              </div>
+            </div>
+            <div class="ledger-field">
+              <label for="ledgerDebt">Debt</label>
+              <input
+                id="ledgerDebt"
+                class="ledger-input"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                data-ledger-field="debt"
+                placeholder="0"
+              />
+              <div class="ledger-buttons" role="group" aria-label="Adjust Debt balance">
+                <button
+                  class="ledger-adjust"
+                  type="button"
+                  data-ledger-field="debt"
+                  data-ledger-direction="add"
+                  aria-label="Increase Debt balance"
+                  title="Increase"
+                >＋</button>
+                <button
+                  class="ledger-adjust"
+                  type="button"
+                  data-ledger-field="debt"
+                  data-ledger-direction="subtract"
+                  aria-label="Decrease Debt balance"
+                  title="Decrease"
+                >－</button>
+              </div>
+            </div>
+            <div class="ledger-field">
+              <label for="ledgerBankUk">Bank Account (uk)</label>
+              <input
+                id="ledgerBankUk"
+                class="ledger-input"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                data-ledger-field="bankUk"
+                placeholder="0"
+              />
+              <div class="ledger-buttons" role="group" aria-label="Adjust Bank Account (uk) balance">
+                <button
+                  class="ledger-adjust"
+                  type="button"
+                  data-ledger-field="bankUk"
+                  data-ledger-direction="add"
+                  aria-label="Increase Bank Account (uk) balance"
+                  title="Increase"
+                >＋</button>
+                <button
+                  class="ledger-adjust"
+                  type="button"
+                  data-ledger-field="bankUk"
+                  data-ledger-direction="subtract"
+                  aria-label="Decrease Bank Account (uk) balance"
+                  title="Decrease"
+                >－</button>
+              </div>
+            </div>
+          </div>
+          <div class="ledger-history">
+            <h4 class="ledger-history-heading">Adjustments</h4>
+            <div id="ledgerHistory" class="ledger-history-list" role="list"></div>
+            <p id="ledgerHistoryEmpty" class="ledger-history-empty" role="status">No adjustments for this day yet.</p>
+          </div>
+        </div>
+      </section>
+
+    </section>
+  </main>
+
+  <section class="log-board" aria-labelledby="logHeading">
+    <div class="log-board-inner">
+      <div class="section-header simple">
+        <h3 id="logHeading">Research Logs</h3>
+        <button id="newLogBtn" class="circle-btn" type="button" title="New research log (L)" aria-label="New research log">＋</button>
+      </div>
+      <form id="logForm" class="card research-form inline-form" aria-label="Create or edit research log" hidden>
+        <div class="form-row">
+          <input id="logTitle" name="title" type="text" placeholder="Log title" required />
+        </div>
+        <textarea
+          id="logDescription"
+          class="auto-resize"
+          name="description"
+          rows="1"
+          placeholder="Overview or context"
+        ></textarea>
+        <textarea
+          id="logResults"
+          class="auto-resize"
+          name="results"
+          rows="1"
+          placeholder="Results or observations"
+        ></textarea>
+        <div class="log-steps">
+          <div class="steps-header">
+            <h4>Operations</h4>
+            <button type="button" id="addLogStep" class="text-btn">Add step</button>
+          </div>
+          <div id="logStepsContainer" class="log-steps-container"></div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Save Log</button>
+          <button type="button" id="cancelLog" class="btn ghost">Cancel</button>
+        </div>
+      </form>
+      <ol id="logList" class="log-list" aria-live="polite"></ol>
+    </div>
+  </section>
+
+  <section class="export-panel" aria-label="Export data">
+    <h3>Export</h3>
+    <div class="export-card export-combined">
+      <div class="export-row">
+        <div class="export-field">
+          <label for="exportDateFrom">Start date</label>
+          <input id="exportDateFrom" type="date" />
+        </div>
+        <div class="export-field">
+          <label for="exportDateTo">End date</label>
+          <input id="exportDateTo" type="date" />
+        </div>
+      </div>
+      <div class="export-actions">
+        <button id="exportTodosTxtRange" class="btn" type="button">Export todo TXT</button>
+        <button id="exportLogsTxt" class="btn" type="button">Export research log TXT</button>
+      </div>
+    </div>
+  </section>
+
+  <template id="todoItemTemplate">
+    <li class="todo-item" draggable="true">
+      <div class="todo-card">
+        <div class="item-main">
+          <label class="item-checkbox">
+            <input type="checkbox" class="todo-done" />
+            <span aria-hidden="true"></span>
+          </label>
+          <div class="item-content">
+            <div class="item-title todo-title"></div>
+            <div class="item-meta todo-meta"></div>
+          </div>
+        </div>
+        <div class="item-actions" role="group" aria-label="Todo actions">
+          <button class="icon-action edit" type="button" title="Edit">✎</button>
+          <button class="icon-action delete" type="button" title="Delete">✕</button>
+        </div>
+      </div>
+    </li>
+  </template>
+
+  <template id="logItemTemplate">
+    <li class="log-item">
+      <div class="item-main">
+        <div class="item-content">
+          <div class="item-title log-title"></div>
+          <div class="item-meta log-meta"></div>
+          <div class="log-description"></div>
+          <div class="log-results"></div>
+          <ul class="log-operations"></ul>
+        </div>
+      </div>
+      <div class="item-actions" role="group" aria-label="Research log actions">
+        <button class="icon-action edit" type="button" title="Edit">✎</button>
+        <button class="icon-action delete" type="button" title="Delete">✕</button>
+      </div>
+    </li>
+  </template>
+
+  <div id="toast" role="status" aria-live="assertive"></div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
